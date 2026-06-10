@@ -1,109 +1,177 @@
-import type { Metadata } from 'next'
+'use client'
+
+import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { StatCard } from '@/components/ui/StatCard'
-import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { TableSkeleton } from '@/components/ui/Skeleton'
+import { hospitalsService } from '@/services/hospitals.service'
+import { usersService } from '@/services/users.service'
+import { auditService } from '@/services/audit.service'
+import { formatDateTime, capitalise } from '@/utils/format'
+import type { AuditAction } from '@/types'
 
-export const metadata: Metadata = { title: 'Admin Dashboard — HealthBridge' }
+const actionBadge: Partial<Record<AuditAction, 'success' | 'info' | 'warning' | 'error' | 'purple'>> = {
+  login: 'success',
+  logout: 'default' as never,
+  create_record: 'success',
+  update_record: 'warning',
+  delete_record: 'error',
+  create_hospital: 'success',
+  assign_doctor: 'purple',
+  create_user: 'success',
+  delete_user: 'error',
+}
 
-const mockStats = [
-  { title: 'Total Hospitals', value: 48, change: '+3 this month', changeType: 'up' as const, iconBg: 'bg-blue-100' },
-  { title: 'Total Doctors', value: 312, change: '+12 this month', changeType: 'up' as const, iconBg: 'bg-purple-100' },
-  { title: 'Total Patients', value: '4,821', change: '+89 this week', changeType: 'up' as const, iconBg: 'bg-green-100' },
-  { title: 'Active Records', value: '18,430', change: '+240 today', changeType: 'up' as const, iconBg: 'bg-amber-100' },
-]
-
-const recentActivity = [
-  { id: '1', action: 'New hospital registered', details: 'Lagos University Teaching Hospital', time: '2 min ago', type: 'hospital' },
-  { id: '2', action: 'Doctor assigned', details: 'Dr. Amaka Obi → General Hospital', time: '15 min ago', type: 'doctor' },
-  { id: '3', action: 'New patient record', details: 'Record #4821 created', time: '32 min ago', type: 'patient' },
-  { id: '4', action: 'Access granted', details: 'Cross-hospital record access', time: '1 hr ago', type: 'access' },
+const quickActions = [
+  { href: '/hospitals/new', label: 'Add Hospital', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
+  { href: '/hospitals', label: 'Hospitals', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
+  { href: '/patients', label: 'Patients', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
+  { href: '/users', label: 'Users', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+  { href: '/audit-logs', label: 'Audit Logs', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
+  { href: '/profile', label: 'Profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
 ]
 
 export default function AdminDashboard() {
+  const { data: hospitals } = useQuery({
+    queryKey: ['hospitals-count'],
+    queryFn: () => hospitalsService.list({ limit: 1 }),
+  })
+
+  const { data: doctors } = useQuery({
+    queryKey: ['doctors-count'],
+    queryFn: () => usersService.list({ role: 'DOCTOR', limit: 1 }),
+  })
+
+  const { data: patients } = useQuery({
+    queryKey: ['patients-count'],
+    queryFn: () => usersService.list({ role: 'PATIENT', limit: 1 }),
+  })
+
+  const { data: recentLogs, isLoading: loadingLogs } = useQuery({
+    queryKey: ['recent-activity'],
+    queryFn: () => auditService.list({ limit: 6 }),
+  })
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
-          <p className="text-sm text-slate-500">Platform overview and management</p>
+          <h1 className="text-xl font-bold text-slate-900">Admin Dashboard</h1>
+          <p className="mt-0.5 text-sm text-slate-500">Platform overview</p>
         </div>
-        <div className="flex gap-2">
-          <Link href="/hospitals/new">
-            <Button size="sm">+ New Hospital</Button>
-          </Link>
-        </div>
+        <Link href="/hospitals/new">
+          <Button size="sm">
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            New Hospital
+          </Button>
+        </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {mockStats.map((stat, i) => (
-          <StatCard
-            key={i}
-            title={stat.title}
-            value={stat.value}
-            change={stat.change}
-            changeType={stat.changeType}
-            iconBg={stat.iconBg}
-            icon={
-              <svg className="h-6 w-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            }
-          />
-        ))}
+      {/* Stats */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatCard
+          title="Hospitals"
+          value={hospitals?.total ?? '—'}
+          accentColor="bg-blue-600"
+          icon={
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          }
+        />
+        <StatCard
+          title="Doctors"
+          value={doctors?.total ?? '—'}
+          accentColor="bg-violet-600"
+          icon={
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          }
+        />
+        <StatCard
+          title="Patients"
+          value={patients?.total ?? '—'}
+          accentColor="bg-emerald-600"
+          icon={
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          }
+        />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <Link href="/audit-logs" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-              View all →
-            </Link>
-          </CardHeader>
-          <div className="space-y-3">
-            {recentActivity.map((item) => (
-              <div key={item.id} className="flex items-start gap-3 rounded-lg border border-slate-100 p-3">
-                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100">
-                  <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900">{item.action}</p>
-                  <p className="text-xs text-slate-500">{item.details}</p>
-                </div>
-                <span className="text-xs text-slate-400 whitespace-nowrap">{item.time}</span>
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        {/* Recent activity */}
+        <div className="lg:col-span-2">
+          <Card padding="none">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-900">Recent Activity</h2>
+              <Link href="/audit-logs" className="text-xs font-medium text-blue-600 hover:text-blue-700">
+                View all →
+              </Link>
+            </div>
+            {loadingLogs ? (
+              <div className="p-5"><TableSkeleton rows={5} /></div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {recentLogs?.data.map((log) => (
+                  <div key={log.id} className="flex items-center gap-3 px-5 py-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                      <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-slate-900 truncate">{log.userName}</p>
+                        <Badge variant={actionBadge[log.action] ?? 'default'}>
+                          {capitalise(log.action.replace(/_/g, ' '))}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-slate-500 truncate">{log.resourceName}</p>
+                    </div>
+                    <span className="shrink-0 text-xs text-slate-400">{formatDateTime(log.timestamp)}</span>
+                  </div>
+                ))}
+                {!recentLogs?.data.length && (
+                  <p className="px-5 py-8 text-center text-sm text-slate-500">No recent activity.</p>
+                )}
               </div>
-            ))}
-          </div>
-        </Card>
+            )}
+          </Card>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { href: '/hospitals', label: 'Manage Hospitals', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5' },
-              { href: '/patients', label: 'View Patients', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
-              { href: '/audit-logs', label: 'Audit Logs', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
-              { href: '/hospitals/new', label: 'Add Hospital', icon: 'M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z' },
-            ].map((action) => (
-              <Link key={action.href} href={action.href}>
-                <div className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 p-4 text-center hover:border-blue-300 hover:bg-blue-50 transition-all">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                    <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={action.icon} />
+        {/* Quick actions */}
+        <div>
+          <Card padding="none">
+            <div className="border-b border-slate-100 px-5 py-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-900">Quick Actions</h2>
+            </div>
+            <div className="p-3 space-y-1">
+              {quickActions.map((action) => (
+                <Link key={action.href} href={action.href}>
+                  <div className="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-slate-50 transition-colors group">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-blue-50 group-hover:bg-blue-100 transition-colors">
+                      <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d={action.icon} />
+                      </svg>
+                    </div>
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900">{action.label}</span>
+                    <svg className="ml-auto h-4 w-4 text-slate-300 group-hover:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
-                  <span className="text-xs font-medium text-slate-700">{action.label}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </Card>
+                </Link>
+              ))}
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   )

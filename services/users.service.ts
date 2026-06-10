@@ -4,6 +4,7 @@ import type { User, UserRole, PaginatedResponse } from '@/types'
 export interface UserFilters {
   search?: string
   role?: string
+  hospitalId?: string
   page?: number
   limit?: number
 }
@@ -22,10 +23,10 @@ export const usersService = {
     api.patch<User>(`/users/${id}`, data).then((r) => r.data),
 
   updateRole: (id: string, role: UserRole) =>
-    api.patch<User>(`/users/${id}/role`, { role }).then((r) => r.data),
+    api.patch<User>(`/users/${id}/role`, { role: role.toUpperCase() }).then((r) => r.data),
 
-  updateStatus: (id: string, status: 'active' | 'inactive' | 'suspended') =>
-    api.patch<User>(`/users/${id}/status`, { status }).then((r) => r.data),
+  updateStatus: (id: string, isActive: boolean) =>
+    api.patch<User>(`/users/${id}/status`, { isActive }).then((r) => r.data),
 
   delete: (id: string) =>
     api.delete(`/users/${id}`).then((r) => r.data),

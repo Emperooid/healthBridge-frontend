@@ -47,14 +47,24 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-      <Input
-        label="Full name"
-        type="text"
-        placeholder="Dr. Jane Smith"
-        autoComplete="name"
-        error={errors.name?.message}
-        {...register('name')}
-      />
+      <div className="grid grid-cols-2 gap-3">
+        <Input
+          label="First name"
+          type="text"
+          placeholder="Jane"
+          autoComplete="given-name"
+          error={errors.firstName?.message}
+          {...register('firstName')}
+        />
+        <Input
+          label="Last name"
+          type="text"
+          placeholder="Smith"
+          autoComplete="family-name"
+          error={errors.lastName?.message}
+          {...register('lastName')}
+        />
+      </div>
       <Input
         label="Email address"
         type="email"

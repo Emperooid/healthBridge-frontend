@@ -1,24 +1,20 @@
 export type BloodType = 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-'
-export type RecordType = 'diagnosis' | 'prescription' | 'lab_result' | 'imaging' | 'surgery' | 'note'
 
 export interface Patient {
   id: string
+  userId: string
   name: string
   email: string
-  dateOfBirth: string
-  gender: 'male' | 'female' | 'other'
-  bloodType: BloodType
-  phone: string
-  address: string
+  dateOfBirth?: string
+  gender?: 'MALE' | 'FEMALE' | 'OTHER'
+  bloodType?: BloodType
+  phone?: string
+  allergies?: string[]
+  emergencyContact?: string
   hospitalId: string
-  hospitalName: string
+  hospitalName?: string
   assignedDoctorId?: string
   assignedDoctorName?: string
-  emergencyContact: {
-    name: string
-    phone: string
-    relationship: string
-  }
   createdAt: string
   updatedAt: string
 }
@@ -27,16 +23,19 @@ export interface MedicalRecord {
   id: string
   patientId: string
   doctorId: string
-  doctorName: string
+  doctorName?: string
   hospitalId: string
-  hospitalName: string
-  type: RecordType
+  hospitalName?: string
   title: string
   description: string
-  date: string
+  diagnosis?: string
+  treatment?: string
+  prescription?: string
+  status?: 'DRAFT' | 'ACTIVE' | 'ARCHIVED'
+  visitDate?: string
   attachments: MedicalAttachment[]
-  crossHospitalAccess: boolean
   createdAt: string
+  updatedAt?: string
 }
 
 export interface MedicalAttachment {
@@ -50,12 +49,13 @@ export interface MedicalAttachment {
 
 export interface PatientListItem {
   id: string
+  userId?: string
   name: string
   email: string
-  dateOfBirth: string
-  gender: 'male' | 'female' | 'other'
-  bloodType: BloodType
-  hospitalName: string
+  dateOfBirth?: string
+  gender?: 'MALE' | 'FEMALE' | 'OTHER'
+  bloodType?: BloodType
+  hospitalName?: string
   assignedDoctorName?: string
   lastVisit?: string
 }

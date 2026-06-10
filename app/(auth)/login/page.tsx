@@ -8,9 +8,9 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Welcome back</h1>
-        <p className="mt-1 text-sm text-slate-600">Sign in to your HealthBridge account</p>
+      <div className="mb-7">
+        <h1 className="text-xl font-bold text-slate-900">Sign in</h1>
+        <p className="mt-1 text-sm text-slate-500">Welcome back — enter your credentials below</p>
       </div>
       <LoginForm />
     </>

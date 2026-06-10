@@ -2,25 +2,31 @@ import { api } from './api'
 import type { MedicalRecord, PaginatedResponse } from '@/types'
 
 export interface RecordFilters {
+  patientId?: string
+  doctorId?: string
+  hospitalId?: string
+  status?: string
   page?: number
   limit?: number
 }
 
 export interface CreateRecordData {
   patientId: string
-  type: MedicalRecord['type']
+  doctorId: string
+  hospitalId: string
   title: string
   description: string
-  date: string
-  crossHospitalAccess?: boolean
+  diagnosis?: string
+  treatment?: string
+  prescription?: string
+  status?: 'DRAFT' | 'ACTIVE' | 'ARCHIVED'
+  visitDate?: string
 }
 
 export const recordsService = {
-  // All records (admin = all, doctor = own, patient = own)
   list: (filters?: RecordFilters) =>
     api.get<PaginatedResponse<MedicalRecord>>('/records', { params: filters }).then((r) => r.data),
 
-  // All records for a specific patient
   getByPatient: (patientId: string) =>
     api.get<MedicalRecord[]>(`/records/patient/${patientId}`).then((r) => r.data),
 

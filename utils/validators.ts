@@ -6,13 +6,14 @@ export const loginSchema = z.object({
 })
 
 export const registerSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
+  firstName: z.string().min(2, 'First name must be at least 2 characters'),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters')
-    .regex(/[a-zA-Z]/, 'Password must contain at least one letter')
-    .regex(/[0-9]/, 'Password must contain at least one number'),
+    .regex(/[a-zA-Z]/, 'Must contain at least one letter')
+    .regex(/[0-9]/, 'Must contain at least one number'),
   role: z.enum(['admin', 'doctor', 'patient'] as const),
 })
 
@@ -23,15 +24,36 @@ export const forgotPasswordSchema = z.object({
 export const createHospitalSchema = z.object({
   name: z.string().min(2, 'Hospital name is required'),
   address: z.string().min(5, 'Address is required'),
-  city: z.string().min(2, 'City is required'),
-  state: z.string().min(2, 'State is required'),
-  phone: z.string().min(7, 'Phone number is required'),
-  email: z.string().email('Please enter a valid email address'),
-  website: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
-  type: z.enum(['public', 'private', 'clinic'] as const),
+  phone: z.string().optional(),
+  email: z.string().email('Please enter a valid email address').optional().or(z.literal('')),
+})
+
+export const assignDoctorSchema = z.object({
+  userId: z.string().min(1, 'Please select a doctor'),
+  licenseNumber: z.string().min(2, 'License number is required'),
+  specialization: z.string().optional(),
+})
+
+export const createRecordSchema = z.object({
+  title: z.string().min(2, 'Title is required'),
+  description: z.string().min(5, 'Description is required'),
+  diagnosis: z.string().optional(),
+  treatment: z.string().optional(),
+  prescription: z.string().optional(),
+  visitDate: z.string().optional(),
+  status: z.enum(['DRAFT', 'ACTIVE', 'ARCHIVED']).optional(),
+})
+
+export const updateProfileSchema = z.object({
+  firstName: z.string().min(2, 'First name must be at least 2 characters'),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
+  phone: z.string().optional(),
 })
 
 export type LoginFormData = z.infer<typeof loginSchema>
 export type RegisterFormData = z.infer<typeof registerSchema>
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
 export type CreateHospitalFormData = z.infer<typeof createHospitalSchema>
+export type AssignDoctorFormData = z.infer<typeof assignDoctorSchema>
+export type CreateRecordFormData = z.infer<typeof createRecordSchema>
+export type UpdateProfileFormData = z.infer<typeof updateProfileSchema>

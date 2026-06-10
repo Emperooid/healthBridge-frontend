@@ -2,10 +2,13 @@ export type UserRole = 'admin' | 'doctor' | 'patient'
 
 export interface User {
   id: string
-  name: string
+  firstName: string
+  lastName: string
+  name: string  // constructed: firstName + ' ' + lastName
   email: string
+  phone?: string
   role: UserRole
-  avatar?: string
+  isActive?: boolean
   createdAt: string
 }
 
@@ -23,14 +26,11 @@ export interface LoginCredentials {
 }
 
 export interface RegisterCredentials {
-  name: string
+  firstName: string
+  lastName: string
   email: string
   password: string
   role: UserRole
-}
-
-export interface ForgotPasswordData {
-  email: string
 }
 
 export interface AuthResponse {

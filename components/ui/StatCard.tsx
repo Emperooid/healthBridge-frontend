@@ -7,27 +7,44 @@ interface StatCardProps {
   change?: string
   changeType?: 'up' | 'down' | 'neutral'
   icon: ReactNode
-  iconBg?: string
+  accentColor?: string
   className?: string
 }
 
-export function StatCard({ title, value, change, changeType = 'neutral', icon, iconBg = 'bg-blue-100', className }: StatCardProps) {
+export function StatCard({
+  title,
+  value,
+  change,
+  changeType = 'neutral',
+  icon,
+  accentColor = 'bg-blue-600',
+  className,
+}: StatCardProps) {
   return (
-    <div className={cn('rounded-xl border border-slate-200 bg-white p-6 shadow-sm', className)}>
+    <div className={cn('relative overflow-hidden rounded-lg border border-slate-200 bg-white px-5 py-4', className)}>
+      <div className={cn('absolute left-0 top-0 bottom-0 w-1', accentColor)} />
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500">{title}</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
+        <div className="ml-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</p>
+          <p className="mt-1.5 text-2xl font-bold text-slate-900 tabular-nums">{value}</p>
           {change && (
-            <p className={cn(
-              'mt-1 text-xs font-medium',
-              changeType === 'up' ? 'text-green-600' : changeType === 'down' ? 'text-red-600' : 'text-slate-500'
-            )}>
+            <p
+              className={cn(
+                'mt-1 flex items-center gap-1 text-xs font-medium',
+                changeType === 'up'
+                  ? 'text-emerald-600'
+                  : changeType === 'down'
+                  ? 'text-red-600'
+                  : 'text-slate-500'
+              )}
+            >
+              {changeType === 'up' && '↑'}
+              {changeType === 'down' && '↓'}
               {change}
             </p>
           )}
         </div>
-        <div className={cn('flex h-12 w-12 items-center justify-center rounded-xl', iconBg)}>
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-500">
           {icon}
         </div>
       </div>

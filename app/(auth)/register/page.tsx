@@ -8,9 +8,9 @@ export const metadata: Metadata = {
 export default function RegisterPage() {
   return (
     <>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Create an account</h1>
-        <p className="mt-1 text-sm text-slate-600">Join HealthBridge to manage your healthcare</p>
+      <div className="mb-7">
+        <h1 className="text-xl font-bold text-slate-900">Create account</h1>
+        <p className="mt-1 text-sm text-slate-500">Register to access the HealthBridge platform</p>
       </div>
       <RegisterForm />
     </>

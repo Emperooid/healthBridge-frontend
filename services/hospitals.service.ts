@@ -3,8 +3,7 @@ import type { Hospital, HospitalDoctor, CreateHospitalData, AssignDoctorData, Pa
 
 export interface HospitalFilters {
   search?: string
-  type?: string
-  status?: string
+  isActive?: boolean
   page?: number
   limit?: number
 }
@@ -19,7 +18,7 @@ export const hospitalsService = {
   create: (data: CreateHospitalData) =>
     api.post<Hospital>('/hospitals', data).then((r) => r.data),
 
-  update: (id: string, data: Partial<CreateHospitalData>) =>
+  update: (id: string, data: Partial<CreateHospitalData> & { isActive?: boolean }) =>
     api.patch<Hospital>(`/hospitals/${id}`, data).then((r) => r.data),
 
   delete: (id: string) =>
@@ -29,8 +28,9 @@ export const hospitalsService = {
     api.get<HospitalDoctor[]>(`/hospitals/${hospitalId}/doctors`).then((r) => r.data),
 
   assignDoctor: (data: AssignDoctorData) =>
-    api.post(`/hospitals/${data.hospitalId}/doctors`, { doctorId: data.doctorId }).then((r) => r.data),
-
-  // Backend doesn't expose DELETE /hospitals/:id/doctors/:doctorId in the spec —
-  // remove from UI until backend adds it, or use PATCH /users/:id/status instead
+    api.post(`/hospitals/${data.hospitalId}/doctors`, {
+      userId: data.userId,
+      specialization: data.specialization,
+      licenseNumber: data.licenseNumber,
+    }).then((r) => r.data),
 }

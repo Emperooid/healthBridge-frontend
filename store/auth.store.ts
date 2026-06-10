@@ -5,9 +5,11 @@ import { persist } from 'zustand/middleware'
 import type { User, AuthState } from '@/types'
 
 interface AuthStore extends AuthState {
+  _hasHydrated: boolean
   setUser: (user: User, accessToken: string, refreshToken: string) => void
   clearAuth: () => void
   setLoading: (loading: boolean) => void
+  setHasHydrated: () => void
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -18,6 +20,7 @@ export const useAuthStore = create<AuthStore>()(
       refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
+      _hasHydrated: false,
 
       setUser: (user, accessToken, refreshToken) => {
         if (typeof window !== 'undefined') {
@@ -36,6 +39,8 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       setLoading: (loading) => set({ isLoading: loading }),
+
+      setHasHydrated: () => set({ _hasHydrated: true }),
     }),
     {
       name: 'hb_auth',
@@ -45,6 +50,9 @@ export const useAuthStore = create<AuthStore>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated()
+      },
     }
   )
 )

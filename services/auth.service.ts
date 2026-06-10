@@ -1,21 +1,38 @@
 import { api } from './api'
-import type { AuthResponse, LoginCredentials, RegisterCredentials, User } from '@/types'
+import type { AuthResponse, LoginCredentials, RegisterCredentials, User, UserRole } from '@/types'
+
+function normalizeUser(raw: Record<string, unknown>): User {
+  const firstName = (raw.firstName as string) ?? ''
+  const lastName = (raw.lastName as string) ?? ''
+  return {
+    ...(raw as Omit<User, 'name' | 'role'>),
+    firstName,
+    lastName,
+    name: `${firstName} ${lastName}`.trim(),
+    role: ((raw.role as string) ?? '').toLowerCase() as UserRole,
+  }
+}
+
+function normalizeAuth(raw: AuthResponse): AuthResponse {
+  return { ...raw, user: normalizeUser(raw.user as unknown as Record<string, unknown>) }
+}
 
 export const authService = {
   login: (data: LoginCredentials) =>
-    api.post<AuthResponse>('/auth/login', data).then((r) => r.data),
+    api.post<AuthResponse>('/auth/login', data).then((r) => normalizeAuth(r.data)),
 
   register: (data: RegisterCredentials) =>
-    api.post<AuthResponse>('/auth/register', data).then((r) => r.data),
+    api.post<AuthResponse>('/auth/register', {
+      ...data,
+      role: data.role.toUpperCase(),
+    }).then((r) => normalizeAuth(r.data)),
 
   refresh: (refreshToken: string) =>
-    api.post<AuthResponse>('/auth/refresh', { refreshToken }).then((r) => r.data),
+    api.post<AuthResponse>('/auth/refresh', { refreshToken }).then((r) => normalizeAuth(r.data)),
 
-  logout: (refreshToken: string) =>
-    api.post('/auth/logout', { refreshToken }).then((r) => r.data),
+  logout: () =>
+    api.post('/auth/logout').then((r) => r.data),
 
   forgotPassword: (email: string) =>
     api.post('/auth/forgot-password', { email }).then((r) => r.data),
-
-  getMe: () => api.get<User>('/auth/me').then((r) => r.data),
 }

@@ -17,3 +17,7 @@ export async function clearSession() {
   await deleteSession()
   redirect('/login')
 }
+
+export async function deleteUserSession() {
+  await deleteSession()
+}

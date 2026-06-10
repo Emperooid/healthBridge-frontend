@@ -9,7 +9,9 @@ interface PatientCardProps {
 }
 
 export function PatientCard({ patient }: PatientCardProps) {
-  const age = new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear()
+  const age = patient.dateOfBirth
+    ? new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear()
+    : null
 
   return (
     <Link href={`/patients/${patient.id}`}>
@@ -18,10 +20,10 @@ export function PatientCard({ patient }: PatientCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm font-semibold text-slate-900">{patient.name}</p>
-            <Badge variant="default">{patient.bloodType}</Badge>
+            {patient.bloodType && <Badge variant="default">{patient.bloodType}</Badge>}
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            {age} yrs • {patient.gender} • {patient.email}
+            {age !== null ? `${age} yrs • ` : ''}{patient.gender ? `${patient.gender} • ` : ''}{patient.email}
           </p>
           <div className="mt-2 flex items-center gap-3 flex-wrap">
             <span className="text-xs text-slate-500 flex items-center gap-1">

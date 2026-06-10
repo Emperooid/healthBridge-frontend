@@ -22,10 +22,10 @@ export function ForgotPasswordForm() {
   async function onSubmit(data: ForgotPasswordFormData) {
     try {
       await authService.forgotPassword(data.email)
-      setSubmitted(true)
     } catch {
-      toast.error('Something went wrong. Please try again.')
+      // Show success regardless to prevent email enumeration
     }
+    setSubmitted(true)
   }
 
   if (submitted) {
