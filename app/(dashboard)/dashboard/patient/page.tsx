@@ -25,8 +25,8 @@ export default function PatientDashboard() {
   const { user } = useAuthStore()
 
   const { data: records, isLoading } = useQuery({
-    queryKey: ['my-records', user?.id],
-    queryFn: () => recordsService.getByPatient(user!.id),
+    queryKey: ['my-records'],
+    queryFn: () => recordsService.mine(),
     enabled: !!user?.id,
   })
 
@@ -42,8 +42,8 @@ export default function PatientDashboard() {
     enabled: !!user?.id,
   })
 
-  const activeRecords = records?.filter((r) => r.status === 'ACTIVE') ?? []
-  const totalAttachments = records?.reduce((acc, r) => acc + (r.attachments?.length ?? 0), 0) ?? 0
+  const activeRecords = records?.data?.filter((r) => r.status === 'ACTIVE') ?? []
+  const totalAttachments = records?.data?.reduce((acc, r) => acc + (r.attachments?.length ?? 0), 0) ?? 0
   const upcomingAppts = appointments?.data.filter((a) => a.status === 'CONFIRMED' || a.status === 'PENDING') ?? []
 
   return (
@@ -57,7 +57,7 @@ export default function PatientDashboard() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           title="Total Records"
-          value={records?.length ?? 0}
+          value={records?.total ?? records?.data?.length ?? 0}
           accentColor="bg-blue-600"
           icon={
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -181,7 +181,7 @@ export default function PatientDashboard() {
               <div className="p-5"><TableSkeleton rows={4} /></div>
             ) : (
               <div className="divide-y divide-slate-100">
-                {records?.slice(0, 6).map((record) => (
+                {records?.data?.slice(0, 6).map((record) => (
                   <div key={record.id} className="flex items-start gap-4 px-5 py-4">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 border border-blue-100">
                       <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -214,7 +214,7 @@ export default function PatientDashboard() {
                     </div>
                   </div>
                 ))}
-                {!records?.length && (
+                {!records?.data?.length && (
                   <p className="py-12 text-center text-sm text-slate-500">No medical records yet.</p>
                 )}
               </div>
@@ -252,13 +252,13 @@ export default function PatientDashboard() {
             </div>
           </Card>
 
-          {records && records.length > 0 && (
+          {records && records.data.length > 0 && (
             <Card padding="sm">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Last Updated</p>
               <p className="text-sm font-medium text-slate-900">
-                {formatDate(records[0].visitDate ?? records[0].createdAt)}
+                {formatDate(records.data[0].visitDate ?? records.data[0].createdAt)}
               </p>
-              <p className="mt-0.5 text-xs text-slate-500">{records[0].title}</p>
+              <p className="mt-0.5 text-xs text-slate-500">{records.data[0].title}</p>
             </Card>
           )}
         </div>

@@ -21,9 +21,9 @@ export interface EncounterNote {
   doctorId: string
   doctorName?: string
   chiefComplaint?: string
-  findings?: string
-  assessment?: string
-  plan?: string
+  examination?: string
+  diagnosis?: string
+  notes?: string
   vitalSigns?: {
     temperature?: number
     bloodPressure?: string
@@ -37,6 +37,7 @@ export interface EncounterNote {
 
 export interface CreateVisitData {
   patientId: string
+  doctorId?: string
   hospitalId: string
   reason?: string
 }
@@ -44,8 +45,8 @@ export interface CreateVisitData {
 export interface CreateEncounterNoteData {
   visitId: string
   chiefComplaint?: string
-  findings?: string
-  assessment?: string
-  plan?: string
+  examination?: string
+  diagnosis?: string
+  notes?: string
   vitalSigns?: EncounterNote['vitalSigns']
 }

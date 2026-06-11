@@ -9,7 +9,7 @@ import { useUIStore } from '@/store/ui.store'
 import { Badge } from '@/components/ui/Badge'
 import { authService } from '@/services/auth.service'
 import { notificationsService } from '@/services/notifications.service'
-import { deleteUserSession } from '@/app/actions/auth'
+import { clearSession } from '@/app/actions/auth'
 import { formatDateTime } from '@/utils/format'
 import toast from 'react-hot-toast'
 
@@ -35,17 +35,19 @@ function NotificationBell() {
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const { user } = useAuthStore()
 
   const { data: unread } = useQuery({
     queryKey: ['notifications-unread'],
     queryFn: () => notificationsService.unreadCount(),
     refetchInterval: 30_000,
+    enabled: !!user?.id,
   })
 
   const { data: recent } = useQuery({
     queryKey: ['notifications-recent'],
     queryFn: () => notificationsService.list({ limit: 6 }),
-    enabled: open,
+    enabled: open && !!user?.id,
   })
 
   const markReadMutation = useMutation({
@@ -155,7 +157,7 @@ function NotificationBell() {
 
 export function Navbar() {
   const pathname = usePathname()
-  const { user, clearAuth } = useAuthStore()
+  const { user } = useAuthStore()
   const { toggleSidebar } = useUIStore()
 
   async function handleLogout() {
@@ -164,9 +166,13 @@ export function Navbar() {
     } catch {
       // ignore network errors on logout
     }
-    clearAuth()
-    await deleteUserSession()
-    window.location.href = '/login'
+    localStorage.removeItem('hb_auth')
+    localStorage.removeItem('hb_access_token')
+    localStorage.removeItem('hb_refresh_token')
+    sessionStorage.removeItem('hb_access_token')
+    sessionStorage.removeItem('hb_refresh_token')
+    // Server action: deletes cookie + server-side redirect (not intercepted by Turbopack)
+    await clearSession()
   }
 
   return (

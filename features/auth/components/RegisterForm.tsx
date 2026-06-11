@@ -79,7 +79,7 @@ export function RegisterForm() {
         placeholder="Min. 8 characters"
         autoComplete="new-password"
         error={errors.password?.message}
-        hint="Must include at least one letter and one number"
+        hint="Min 8 chars — uppercase, lowercase, number, and special character required"
         {...register('password')}
       />
       <Select

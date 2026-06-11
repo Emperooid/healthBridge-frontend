@@ -13,6 +13,9 @@ export const patientsService = {
   list: (filters?: PatientFilters) =>
     api.get<PaginatedResponse<PatientListItem>>('/patients', { params: filters }).then((r) => r.data),
 
+  me: () =>
+    api.get<Patient>('/patients/me').then((r) => r.data),
+
   getById: (id: string) =>
     api.get<Patient>(`/patients/${id}`).then((r) => r.data),
 

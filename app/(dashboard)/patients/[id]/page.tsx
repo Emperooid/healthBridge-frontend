@@ -28,9 +28,9 @@ function EncounterModal({
 }) {
   const queryClient = useQueryClient()
   const [complaint, setComplaint] = useState('')
-  const [findings, setFindings] = useState('')
-  const [assessment, setAssessment] = useState('')
-  const [plan, setPlan] = useState('')
+  const [examination, setExamination] = useState('')
+  const [diagnosis, setDiagnosis] = useState('')
+  const [noteText, setNoteText] = useState('')
 
   const { data: notes } = useQuery({
     queryKey: ['encounter-notes', visit.id],
@@ -42,17 +42,17 @@ function EncounterModal({
       encountersService.addNote({
         visitId: visit.id,
         chiefComplaint: complaint,
-        findings,
-        assessment,
-        plan,
+        examination,
+        diagnosis,
+        notes: noteText,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['encounter-notes', visit.id] })
       queryClient.invalidateQueries({ queryKey: ['patient-visits', patientId] })
       setComplaint('')
-      setFindings('')
-      setAssessment('')
-      setPlan('')
+      setExamination('')
+      setDiagnosis('')
+      setNoteText('')
       toast.success('Note saved')
     },
     onError: () => toast.error('Failed to save note'),
@@ -78,9 +78,9 @@ function EncounterModal({
             {notes.map((note: EncounterNote) => (
               <div key={note.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm space-y-1.5">
                 {note.chiefComplaint && <p><span className="font-medium text-slate-600">Complaint:</span> {note.chiefComplaint}</p>}
-                {note.findings && <p><span className="font-medium text-slate-600">Findings:</span> {note.findings}</p>}
-                {note.assessment && <p><span className="font-medium text-slate-600">Assessment:</span> {note.assessment}</p>}
-                {note.plan && <p><span className="font-medium text-slate-600">Plan:</span> {note.plan}</p>}
+                {note.examination && <p><span className="font-medium text-slate-600">Findings:</span> {note.examination}</p>}
+                {note.diagnosis && <p><span className="font-medium text-slate-600">Assessment:</span> {note.diagnosis}</p>}
+                {note.notes && <p><span className="font-medium text-slate-600">Plan:</span> {note.notes}</p>}
               </div>
             ))}
           </div>
@@ -91,9 +91,9 @@ function EncounterModal({
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Add note</p>
           {[
             { label: 'Chief Complaint', value: complaint, set: setComplaint },
-            { label: 'Examination Findings', value: findings, set: setFindings },
-            { label: 'Assessment / Diagnosis', value: assessment, set: setAssessment },
-            { label: 'Plan', value: plan, set: setPlan },
+            { label: 'Examination Findings', value: examination, set: setExamination },
+            { label: 'Assessment / Diagnosis', value: diagnosis, set: setDiagnosis },
+            { label: 'Plan / Notes', value: noteText, set: setNoteText },
           ].map(({ label, value, set }) => (
             <div key={label}>
               <label className="mb-1 block text-xs font-medium text-slate-600">{label}</label>
@@ -121,7 +121,7 @@ function EncounterModal({
             <Button
               size="sm"
               onClick={() => addNoteMutation.mutate()}
-              disabled={addNoteMutation.isPending || (!complaint && !findings && !assessment && !plan)}
+              disabled={addNoteMutation.isPending || (!complaint && !examination && !diagnosis && !noteText)}
             >
               {addNoteMutation.isPending ? 'Saving...' : 'Save Note'}
             </Button>
@@ -315,7 +315,7 @@ export default function PatientProfilePage(props: { params: Promise<{ id: string
                 {[1, 2, 3].map((i) => <div key={i} className="h-16 rounded bg-slate-100" />)}
               </div>
             ) : (
-              <MedicalTimeline records={records?.slice(0, 5) ?? []} />
+              <MedicalTimeline records={records?.data?.slice(0, 5) ?? []} />
             )}
           </Card>
         </div>

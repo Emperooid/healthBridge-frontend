@@ -27,8 +27,11 @@ export const recordsService = {
   list: (filters?: RecordFilters) =>
     api.get<PaginatedResponse<MedicalRecord>>('/records', { params: filters }).then((r) => r.data),
 
+  mine: () =>
+    api.get<PaginatedResponse<MedicalRecord>>('/records/mine').then((r) => r.data),
+
   getByPatient: (patientId: string) =>
-    api.get<MedicalRecord[]>(`/records/patient/${patientId}`).then((r) => r.data),
+    api.get<PaginatedResponse<MedicalRecord>>(`/records/patient/${patientId}`).then((r) => r.data),
 
   getById: (id: string) =>
     api.get<MedicalRecord>(`/records/${id}`).then((r) => r.data),

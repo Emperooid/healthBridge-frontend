@@ -71,7 +71,7 @@ export default function PatientRecordsPage(props: { params: Promise<{ id: string
           <h1 className="mt-2 text-xl font-bold text-slate-900">
             {patient?.name ? `${patient.name}'s Records` : 'Medical Records'}
           </h1>
-          <p className="mt-0.5 text-sm text-slate-500">{records?.length ?? 0} records</p>
+          <p className="mt-0.5 text-sm text-slate-500">{records?.total ?? records?.data?.length ?? 0} records</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setUploadOpen(true)}>
@@ -92,10 +92,10 @@ export default function PatientRecordsPage(props: { params: Promise<{ id: string
       </div>
 
       {/* Summary stats */}
-      {records && records.length > 0 && (
+      {records && records.data.length > 0 && (
         <div className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white px-5 py-3">
           {(['ACTIVE', 'DRAFT', 'ARCHIVED'] as const).map((status) => {
-            const count = records.filter((r) => r.status === status).length
+            const count = records.data.filter((r) => r.status === status).length
             return (
               <div key={status} className="flex items-center gap-1.5">
                 <Badge
@@ -120,7 +120,7 @@ export default function PatientRecordsPage(props: { params: Promise<{ id: string
             {[1, 2, 3].map((i) => <div key={i} className="h-20 animate-pulse rounded bg-slate-100" />)}
           </div>
         ) : (
-          <MedicalTimeline records={records ?? []} />
+          <MedicalTimeline records={records?.data ?? []} />
         )}
       </Card>
 

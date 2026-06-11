@@ -60,14 +60,14 @@ export default function ShareRecordsPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   const { data: links, isLoading: loadingLinks } = useQuery({
-    queryKey: ['share-links', user?.id],
-    queryFn: () => shareService.getLinks(user!.id),
+    queryKey: ['share-links'],
+    queryFn: () => shareService.getLinks(),
     enabled: !!user?.id,
   })
 
   const { data: grants, isLoading: loadingGrants } = useQuery({
-    queryKey: ['share-grants', user?.id],
-    queryFn: () => shareService.getGrants(user!.id),
+    queryKey: ['share-grants'],
+    queryFn: () => shareService.getGrants(),
     enabled: !!user?.id,
   })
 
@@ -82,7 +82,7 @@ export default function ShareRecordsPage() {
   })
 
   const createLinkMutation = useMutation({
-    mutationFn: (data: LinkForm) => shareService.createLink(user!.id, {
+    mutationFn: (data: LinkForm) => shareService.createLink({
       ...data,
       maxAccess: data.maxAccess ? parseInt(data.maxAccess, 10) : undefined,
     }),
@@ -107,7 +107,7 @@ export default function ShareRecordsPage() {
   })
 
   const createGrantMutation = useMutation({
-    mutationFn: (data: GrantForm) => shareService.createGrant(user!.id, data),
+    mutationFn: (data: GrantForm) => shareService.createGrant(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['share-grants'] })
       grantForm.reset()

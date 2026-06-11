@@ -24,14 +24,21 @@ export const useAuthStore = create<AuthStore>()(
 
       setUser: (user, accessToken, refreshToken) => {
         if (typeof window !== 'undefined') {
-          localStorage.setItem('hb_access_token', accessToken)
-          localStorage.setItem('hb_refresh_token', refreshToken)
+          // sessionStorage: cleared on browser/tab close, not readable cross-tab
+          // localStorage is intentionally avoided for tokens (XSS persistence risk)
+          sessionStorage.setItem('hb_access_token', accessToken)
+          sessionStorage.setItem('hb_refresh_token', refreshToken)
+          // Clean up any tokens left in localStorage from before this change
+          localStorage.removeItem('hb_access_token')
+          localStorage.removeItem('hb_refresh_token')
         }
         set({ user, accessToken, refreshToken, isAuthenticated: true, isLoading: false })
       },
 
       clearAuth: () => {
         if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('hb_access_token')
+          sessionStorage.removeItem('hb_refresh_token')
           localStorage.removeItem('hb_access_token')
           localStorage.removeItem('hb_refresh_token')
         }
@@ -46,9 +53,8 @@ export const useAuthStore = create<AuthStore>()(
       name: 'hb_auth',
       partialize: (state) => ({
         user: state.user,
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
+        // Tokens are NOT persisted to localStorage — they live in sessionStorage only
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated()

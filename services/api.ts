@@ -1,6 +1,7 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios'
+import { useAuthStore } from '@/store/auth.store'
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1'
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '/api/v1'
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -11,7 +12,7 @@ export const api = axios.create({
 // ── Request: attach access token ────────────────────────────────────────────
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('hb_access_token')
+    const token = sessionStorage.getItem('hb_access_token')
     if (token) config.headers.Authorization = `Bearer ${token}`
   }
   return config
@@ -54,20 +55,19 @@ api.interceptors.response.use(
       refreshing = true
 
       try {
-        const refreshToken = localStorage.getItem('hb_refresh_token')
+        const refreshToken = sessionStorage.getItem('hb_refresh_token')
         if (!refreshToken) throw new Error('No refresh token')
 
         const { data } = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken })
         const newAccess: string = data?.data?.accessToken ?? data?.accessToken
-        localStorage.setItem('hb_access_token', newAccess)
+        sessionStorage.setItem('hb_access_token', newAccess)
         original.headers.Authorization = `Bearer ${newAccess}`
         drainQueue(newAccess, null)
         return api(original)
       } catch (refreshError) {
         drainQueue(null, refreshError)
-        localStorage.removeItem('hb_access_token')
-        localStorage.removeItem('hb_refresh_token')
-        if (typeof window !== 'undefined') window.location.href = '/login'
+        useAuthStore.getState().clearAuth()
+        // Navigation is handled by DashboardLayout which watches isAuthenticated
         return Promise.reject(refreshError)
       } finally {
         refreshing = false

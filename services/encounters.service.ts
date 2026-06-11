@@ -18,7 +18,7 @@ export const encountersService = {
     api.post<EncounterNote>('/encounters/notes', data).then((r) => r.data),
 
   getNotes: (visitId: string) =>
-    api.get<EncounterNote[]>('/encounters/notes', { params: { visitId } }).then((r) => r.data),
+    api.get<EncounterNote[]>(`/encounters/visits/${visitId}/notes`).then((r) => r.data),
 
   updateNote: (id: string, data: Partial<CreateEncounterNoteData>) =>
     api.patch<EncounterNote>(`/encounters/notes/${id}`, data).then((r) => r.data),

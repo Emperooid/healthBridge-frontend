@@ -6,14 +6,17 @@ export const loginSchema = z.object({
 })
 
 export const registerSchema = z.object({
-  firstName: z.string().min(2, 'First name must be at least 2 characters'),
-  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email address'),
+  firstName: z.string().min(2, 'First name must be at least 2 characters').max(50),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters').max(50),
+  email: z.string().email('Please enter a valid email address').max(254),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters')
-    .regex(/[a-zA-Z]/, 'Must contain at least one letter')
-    .regex(/[0-9]/, 'Must contain at least one number'),
+    .max(128, 'Password must be under 128 characters')
+    .regex(/[a-z]/, 'Must contain at least one lowercase letter')
+    .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+    .regex(/[0-9]/, 'Must contain at least one number')
+    .regex(/[^a-zA-Z0-9]/, 'Must contain at least one special character (e.g. !@#$%^&*)'),
   role: z.enum(['admin', 'doctor', 'patient'] as const),
 })
 
