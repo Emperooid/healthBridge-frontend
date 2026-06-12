@@ -42,9 +42,12 @@ export const authService = {
   verifyEmail: (token: string) =>
     api.get('/auth/verify-email', { params: { token } }).then((r) => r.data),
 
-  // email is sent as body so the endpoint works even when the caller has no auth token
-  resendVerification: (email?: string) =>
-    api.post('/auth/resend-verification', email ? { email } : {}).then((r) => r.data),
+  resendVerification: (email: string) =>
+    api.post('/auth/resend-verification', { email }).then((r) => r.data),
+
+  // Authenticated variant — for logged-in users who need a new link (no email body needed)
+  resendVerificationMe: () =>
+    api.post('/auth/resend-verification/me').then((r) => r.data),
 
   changePassword: (currentPassword: string, newPassword: string) =>
     api.post('/auth/change-password', { currentPassword, newPassword }).then((r) => r.data),

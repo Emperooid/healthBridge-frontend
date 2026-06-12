@@ -64,13 +64,8 @@ export function LoginForm() {
     try {
       await authService.resendVerification(unverifiedEmail)
       toast.success('Verification email resent — check your inbox')
-    } catch (err: unknown) {
-      const status = (err as { response?: { status?: number } })?.response?.status
-      if (status === 401) {
-        toast.error('Check your original verification email, or register again to get a new link.')
-      } else {
-        toast.error('Failed to resend. Please try again in a moment.')
-      }
+    } catch {
+      toast.error('Failed to resend. Please try again in a moment.')
     } finally {
       setResending(false)
     }
