@@ -6,7 +6,8 @@ import type { User, AuthState } from '@/types'
 
 interface AuthStore extends AuthState {
   _hasHydrated: boolean
-  setUser: (user: User, accessToken: string, refreshToken: string) => void
+  setUser: (user: User, accessToken: string) => void
+  setTokens: (accessToken: string) => void
   clearAuth: () => void
   setLoading: (loading: boolean) => void
   setHasHydrated: () => void
@@ -22,25 +23,29 @@ export const useAuthStore = create<AuthStore>()(
       isLoading: false,
       _hasHydrated: false,
 
-      setUser: (user, accessToken, refreshToken) => {
+      setUser: (user, accessToken) => {
         if (typeof window !== 'undefined') {
-          // sessionStorage: cleared on browser/tab close, not readable cross-tab
-          // localStorage is intentionally avoided for tokens (XSS persistence risk)
-          sessionStorage.setItem('hb_access_token', accessToken)
-          sessionStorage.setItem('hb_refresh_token', refreshToken)
-          // Clean up any tokens left in localStorage from before this change
+          // accessToken is memory-only; refreshToken is an HttpOnly cookie — no JS storage needed
+          // Clean up any stale tokens that may exist from older versions
           localStorage.removeItem('hb_access_token')
           localStorage.removeItem('hb_refresh_token')
+          sessionStorage.removeItem('hb_access_token')
+          sessionStorage.removeItem('hb_refresh_token')
         }
-        set({ user, accessToken, refreshToken, isAuthenticated: true, isLoading: false })
+        set({ user, accessToken, refreshToken: null, isAuthenticated: true, isLoading: false })
+      },
+
+      // Called by the Axios refresh interceptor after a silent token refresh
+      setTokens: (accessToken) => {
+        set({ accessToken })
       },
 
       clearAuth: () => {
         if (typeof window !== 'undefined') {
-          sessionStorage.removeItem('hb_access_token')
-          sessionStorage.removeItem('hb_refresh_token')
           localStorage.removeItem('hb_access_token')
           localStorage.removeItem('hb_refresh_token')
+          sessionStorage.removeItem('hb_access_token')
+          sessionStorage.removeItem('hb_refresh_token')
         }
         set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, isLoading: false })
       },
@@ -54,7 +59,7 @@ export const useAuthStore = create<AuthStore>()(
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
-        // Tokens are NOT persisted to localStorage — they live in sessionStorage only
+        // Tokens are never persisted — accessToken is memory-only, refreshToken is HttpOnly cookie
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated()

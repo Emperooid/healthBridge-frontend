@@ -7,18 +7,19 @@ export const api = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
+  // Required for the browser to send the HttpOnly hb_refresh_token cookie cross-origin
+  withCredentials: true,
 })
 
 // ── Request: attach access token ────────────────────────────────────────────
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  if (typeof window !== 'undefined') {
-    const token = sessionStorage.getItem('hb_access_token')
-    if (token) config.headers.Authorization = `Bearer ${token}`
-  }
+  // Access token lives in Zustand memory only — never in any storage
+  const token = useAuthStore.getState().accessToken
+  if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
 
-// ── Response: unwrap envelope + handle 401 with token refresh ───────────────
+// ── Response: unwrap envelope + handle 401 with silent token refresh ─────────
 let refreshing = false
 let queue: Array<{ resolve: (v: string) => void; reject: (e: unknown) => void }> = []
 
@@ -55,12 +56,12 @@ api.interceptors.response.use(
       refreshing = true
 
       try {
-        const refreshToken = sessionStorage.getItem('hb_refresh_token')
-        if (!refreshToken) throw new Error('No refresh token')
-
-        const { data } = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken })
+        // No body — the HttpOnly hb_refresh_token cookie is sent automatically
+        const { data } = await axios.post(`${BASE_URL}/auth/refresh`, undefined, {
+          withCredentials: true,
+        })
         const newAccess: string = data?.data?.accessToken ?? data?.accessToken
-        sessionStorage.setItem('hb_access_token', newAccess)
+        useAuthStore.getState().setTokens(newAccess)
         original.headers.Authorization = `Bearer ${newAccess}`
         drainQueue(newAccess, null)
         return api(original)

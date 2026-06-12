@@ -27,11 +27,15 @@ export function LoginForm() {
   const router = useRouter()
   const { setUser } = useAuthStore()
 
+  // Brute-force protection
   const failCount = useRef(0)
   const lockTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const [lockSecondsLeft, setLockSecondsLeft] = useState(0)
 
-  // Clean up the interval on unmount
+  // Unverified-email state — set when login returns 403
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null)
+  const [resending, setResending] = useState(false)
+
   useEffect(() => () => { if (lockTimer.current) clearInterval(lockTimer.current) }, [])
 
   const {
@@ -54,16 +58,39 @@ export function LoginForm() {
     }, 1000)
   }
 
+  async function handleResend() {
+    if (!unverifiedEmail) return
+    setResending(true)
+    try {
+      await authService.resendVerification(unverifiedEmail)
+      toast.success('Verification email resent — check your inbox')
+    } catch {
+      toast.error('Failed to resend. Please try again in a moment.')
+    } finally {
+      setResending(false)
+    }
+  }
+
   async function onSubmit(data: LoginFormData) {
     if (lockSecondsLeft > 0) return
+    setUnverifiedEmail(null)
+
     try {
       const response = await authService.login(data)
       failCount.current = 0
-      setUser(response.user, response.accessToken, response.refreshToken)
+      setUser(response.user, response.accessToken)
       await writeSession(response.user.id, response.user.role, response.user.email, response.user.name)
       toast.success(`Welcome back, ${response.user.name}!`)
       router.push(roleDashboards[response.user.role])
     } catch (err: unknown) {
+      const httpStatus = (err as { response?: { status?: number } })?.response?.status
+
+      // 403 = account exists but email is not yet verified
+      if (httpStatus === 403) {
+        setUnverifiedEmail(data.email)
+        return
+      }
+
       failCount.current += 1
       if (failCount.current >= MAX_ATTEMPTS) {
         startLockout()
@@ -71,9 +98,10 @@ export function LoginForm() {
       } else {
         const remaining = MAX_ATTEMPTS - failCount.current
         const message =
-          (err as { message?: string })?.message ??
-          'Invalid credentials. Please try again.'
-        toast.error(`${message}${remaining <= 2 ? ` (${remaining} attempt${remaining === 1 ? '' : 's'} left)` : ''}`)
+          (err as { message?: string })?.message ?? 'Invalid credentials. Please try again.'
+        toast.error(
+          `${message}${remaining <= 2 ? ` (${remaining} attempt${remaining === 1 ? '' : 's'} left)` : ''}`
+        )
       }
     }
   }
@@ -101,6 +129,25 @@ export function LoginForm() {
         {...register('password')}
       />
 
+      {/* Email not verified banner */}
+      {unverifiedEmail && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-medium text-amber-800">Email not verified</p>
+          <p className="mt-0.5 text-xs text-amber-700">
+            Check your inbox for the verification link.{' '}
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resending}
+              className="font-semibold underline underline-offset-2 hover:text-amber-900 disabled:opacity-50"
+            >
+              {resending ? 'Sending…' : 'Resend email'}
+            </button>
+          </p>
+        </div>
+      )}
+
+      {/* Lockout countdown */}
       {isLocked && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-center text-sm font-medium text-red-600">
           Too many failed attempts — try again in {lockSecondsLeft}s

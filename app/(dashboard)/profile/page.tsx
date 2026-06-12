@@ -11,6 +11,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { usersService } from '@/services/users.service'
 import { useAuthStore } from '@/store/auth.store'
 import { updateProfileSchema, type UpdateProfileFormData } from '@/utils/validators'
+import { ChangePasswordForm } from '@/features/auth/components/ChangePasswordForm'
 import { formatDate } from '@/utils/format'
 
 const roleBadge: Record<string, 'purple' | 'info' | 'success'> = {
@@ -20,7 +21,7 @@ const roleBadge: Record<string, 'purple' | 'info' | 'success'> = {
 }
 
 export default function ProfilePage() {
-  const { user, setUser, accessToken, refreshToken } = useAuthStore()
+  const { user, setUser, accessToken } = useAuthStore()
 
   const {
     register,
@@ -43,8 +44,7 @@ export default function ProfilePage() {
       const lastName = (updated as { lastName?: string }).lastName ?? data.lastName
       setUser(
         { ...user, ...updated, firstName, lastName, name: `${firstName} ${lastName}`.trim() },
-        accessToken!,
-        refreshToken!
+        accessToken!
       )
       toast.success('Profile updated')
     } catch {
@@ -134,21 +134,15 @@ export default function ProfilePage() {
         </form>
       </Card>
 
-      {/* Security (placeholder) */}
+      {/* Security */}
       <Card>
         <CardHeader>
-          <CardTitle>Security</CardTitle>
+          <CardTitle>Change password</CardTitle>
         </CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-slate-800">Password</p>
-            <p className="text-xs text-slate-500">Last changed: unknown</p>
-          </div>
-          <Button variant="outline" size="sm" disabled>
-            Change password
-          </Button>
-        </div>
-        <p className="mt-3 text-xs text-slate-400">Password change is not yet available — contact your administrator.</p>
+        <p className="mb-4 text-xs text-slate-500">
+          Changing your password will sign you out of all other devices immediately.
+        </p>
+        <ChangePasswordForm />
       </Card>
     </div>
   )

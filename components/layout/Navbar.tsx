@@ -166,6 +166,7 @@ export function Navbar() {
     } catch {
       // ignore network errors on logout
     }
+    // Belt-and-braces cleanup of any stale storage keys from older versions
     localStorage.removeItem('hb_auth')
     localStorage.removeItem('hb_access_token')
     localStorage.removeItem('hb_refresh_token')
