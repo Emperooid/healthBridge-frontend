@@ -35,4 +35,17 @@ export const authService = {
 
   forgotPassword: (email: string) =>
     api.post('/auth/forgot-password', { email }).then((r) => r.data),
+
+  resetPassword: (token: string, newPassword: string) =>
+    api.post('/auth/reset-password', { token, newPassword }).then((r) => r.data),
+
+  verifyEmail: (token: string) =>
+    api.get('/auth/verify-email', { params: { token } }).then((r) => r.data),
+
+  // email is sent as body so the endpoint works even when the caller has no auth token
+  resendVerification: (email?: string) =>
+    api.post('/auth/resend-verification', email ? { email } : {}).then((r) => r.data),
+
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.post('/auth/change-password', { currentPassword, newPassword }).then((r) => r.data),
 }

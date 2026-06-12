@@ -36,7 +36,7 @@ export interface RegisterCredentials {
 export interface AuthResponse {
   user: User
   accessToken: string
-  refreshToken: string
+  refreshToken?: string  // no longer returned in body — now an HttpOnly cookie
 }
 
 export interface AuthState {
