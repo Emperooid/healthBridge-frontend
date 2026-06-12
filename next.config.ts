@@ -23,8 +23,10 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      // unsafe-eval is required by Next.js/Turbopack in dev; tighten in prod if using nonces
-      `script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"}`,
+      // unsafe-eval is required by Turbopack at runtime (not just build time).
+      // unsafe-inline is already present so removing unsafe-eval adds no meaningful
+      // protection without a full nonce-based CSP — keep it in both environments.
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
       // blob: for QR code canvas, data: for base64 images
       "img-src 'self' data: blob: https:",
