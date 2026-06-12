@@ -1,55 +1,89 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { decrypt } from '@/lib/session'
-import { cookies } from 'next/headers'
+import { jwtVerify } from 'jose'
+import type { SessionPayload } from '@/types'
 
-const publicRoutes = ['/login', '/register', '/forgot-password', '/unauthorized']
-const adminRoutes = ['/dashboard/admin', '/hospitals', '/audit-logs']
-const doctorRoutes = ['/dashboard/doctor']
-const patientRoutes = ['/dashboard/patient']
+const encodedKey = new TextEncoder().encode(
+  process.env.SESSION_SECRET ?? 'healthbridge-dev-secret-key-change-in-production'
+)
 
-export default async function proxy(req: NextRequest) {
-  const path = req.nextUrl.pathname
+async function getSession(req: NextRequest): Promise<SessionPayload | null> {
+  const cookie = req.cookies.get('hb_session')?.value
+  if (!cookie) return null
+  try {
+    const { payload } = await jwtVerify(cookie, encodedKey, { algorithms: ['HS256'] })
+    return payload as unknown as SessionPayload
+  } catch {
+    return null
+  }
+}
 
-  const isPublicRoute = publicRoutes.some((r) => path === r || path.startsWith(r + '/'))
-  const isApiRoute = path.startsWith('/api')
-  const isStaticRoute = path.startsWith('/_next') || path.startsWith('/favicon') || path === '/'
+const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email']
 
-  if (isApiRoute || isStaticRoute) return NextResponse.next()
+const PROTECTED_PREFIXES = [
+  '/dashboard',
+  '/patients',
+  '/hospitals',
+  '/audit-logs',
+  '/appointments',
+  '/notifications',
+  '/profile',
+  '/share',
+  '/users',
+]
 
-  const cookieStore = await cookies()
-  const session = await decrypt(cookieStore.get('hb_session')?.value)
+const ROLE_GUARDS: { prefix: string; roles: string[] }[] = [
+  { prefix: '/dashboard/admin', roles: ['admin'] },
+  { prefix: '/dashboard/doctor', roles: ['doctor'] },
+  { prefix: '/dashboard/patient', roles: ['patient'] },
+  { prefix: '/users', roles: ['admin'] },
+  { prefix: '/audit-logs', roles: ['admin'] },
+]
 
-  if (!session?.userId) {
-    if (isPublicRoute) return NextResponse.next()
-    return NextResponse.redirect(new URL('/login', req.nextUrl))
+const ROLE_HOME: Record<string, string> = {
+  admin: '/dashboard/admin',
+  doctor: '/dashboard/doctor',
+  patient: '/dashboard/patient',
+}
+
+function matchesPrefix(pathname: string, prefix: string) {
+  return pathname === prefix || pathname.startsWith(prefix + '/')
+}
+
+export default async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  const session = await getSession(request)
+
+  const isAuthRoute = AUTH_ROUTES.some((r) => matchesPrefix(pathname, r))
+  const isProtected = PROTECTED_PREFIXES.some((p) => matchesPrefix(pathname, p))
+
+  // Logged-in users don't need auth pages — send them home
+  if (isAuthRoute && session) {
+    return NextResponse.redirect(
+      new URL(ROLE_HOME[session.role] ?? '/dashboard/patient', request.url)
+    )
   }
 
-  if (isPublicRoute) {
-    const roleDest = {
-      admin: '/dashboard/admin',
-      doctor: '/dashboard/doctor',
-      patient: '/dashboard/patient',
-    }[session.role as string]
-    return NextResponse.redirect(new URL(roleDest ?? '/dashboard/admin', req.nextUrl))
+  // Unauthenticated access to protected route → login, preserve intended destination
+  if (isProtected && !session) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('next', pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
-  const isAdminRoute = adminRoutes.some((r) => path === r || path.startsWith(r + '/'))
-  const isDoctorRoute = doctorRoutes.some((r) => path === r || path.startsWith(r + '/'))
-  const isPatientRoute = patientRoutes.some((r) => path === r || path.startsWith(r + '/'))
-
-  if (isAdminRoute && session.role !== 'admin') {
-    return NextResponse.redirect(new URL('/unauthorized', req.nextUrl))
-  }
-  if (isDoctorRoute && session.role !== 'doctor') {
-    return NextResponse.redirect(new URL('/unauthorized', req.nextUrl))
-  }
-  if (isPatientRoute && session.role !== 'patient') {
-    return NextResponse.redirect(new URL('/unauthorized', req.nextUrl))
+  // RBAC: block access to another role's area
+  if (session) {
+    for (const guard of ROLE_GUARDS) {
+      if (matchesPrefix(pathname, guard.prefix) && !guard.roles.includes(session.role)) {
+        return NextResponse.redirect(
+          new URL(ROLE_HOME[session.role] ?? '/dashboard/patient', request.url)
+        )
+      }
+    }
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }
