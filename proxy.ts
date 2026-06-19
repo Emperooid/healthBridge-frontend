@@ -17,7 +17,7 @@ async function getSession(req: NextRequest): Promise<SessionPayload | null> {
   }
 }
 
-const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/register-hospital']
+const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/register-hospital', '/accept-invite']
 
 const PROTECTED_PREFIXES = [
   '/dashboard',
@@ -29,6 +29,10 @@ const PROTECTED_PREFIXES = [
   '/profile',
   '/share',
   '/users',
+  '/schedule',
+  '/analytics',
+  '/prescriptions',
+  '/labs',
 ]
 
 const ROLE_GUARDS: { prefix: string; roles: string[] }[] = [
@@ -37,6 +41,8 @@ const ROLE_GUARDS: { prefix: string; roles: string[] }[] = [
   { prefix: '/dashboard/patient', roles: ['patient'] },
   { prefix: '/users', roles: ['admin'] },
   { prefix: '/audit-logs', roles: ['admin'] },
+  { prefix: '/analytics', roles: ['admin'] },
+  { prefix: '/schedule', roles: ['doctor'] },
 ]
 
 const ROLE_HOME: Record<string, string> = {

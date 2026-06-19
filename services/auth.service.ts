@@ -51,4 +51,10 @@ export const authService = {
 
   changePassword: (currentPassword: string, newPassword: string) =>
     api.post('/auth/change-password', { currentPassword, newPassword }).then((r) => r.data),
+
+  verifyInviteToken: (token: string) =>
+    api.get<{ firstName: string; lastName: string; email: string; role: string }>('/auth/invite/verify', { params: { token } }).then((r) => r.data),
+
+  acceptInvite: (token: string, password: string) =>
+    api.post('/auth/accept-invite', { token, password }).then((r) => r.data),
 }

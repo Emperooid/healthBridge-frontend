@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -34,6 +35,94 @@ const quickActions = [
   { href: '/profile', label: 'Profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
 ]
 
+function OnboardingBanner({ doctorCount }: { doctorCount: number }) {
+  const [dismissed, setDismissed] = useState(true)
+
+  useEffect(() => {
+    setDismissed(localStorage.getItem('hb_onboarding_dismissed') === 'true')
+  }, [])
+
+  if (dismissed || doctorCount > 0) return null
+
+  return (
+    <div className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-600">
+            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-slate-900">Welcome to HealthBridge! Let&apos;s set up your hospital</p>
+            <p className="text-xs text-slate-500 mt-0.5">Complete these steps to get your team up and running</p>
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            localStorage.setItem('hb_onboarding_dismissed', 'true')
+            setDismissed(true)
+          }}
+          className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-blue-100 hover:text-slate-600 transition-colors"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {[
+          {
+            step: 1,
+            done: true,
+            title: 'Hospital registered',
+            desc: 'Your hospital account is active on HealthBridge',
+            action: null,
+          },
+          {
+            step: 2,
+            done: false,
+            title: 'Invite your first doctor',
+            desc: 'Go to Users → Invite Doctor to add your medical team',
+            action: { href: '/users', label: 'Invite Doctor →' },
+          },
+          {
+            step: 3,
+            done: false,
+            title: 'Patients can now register',
+            desc: 'Patients select your hospital when they create an account',
+            action: null,
+          },
+        ].map(({ step, done, title, desc, action }) => (
+          <div key={step} className={`rounded-lg border p-3.5 ${done ? 'border-green-200 bg-white' : 'border-blue-100 bg-white'}`}>
+            <div className="flex items-center gap-2 mb-2">
+              {done ? (
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500">
+                  <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold text-blue-600">
+                  {step}
+                </div>
+              )}
+              <p className={`text-xs font-semibold ${done ? 'text-green-800' : 'text-slate-900'}`}>{title}</p>
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed">{desc}</p>
+            {action && (
+              <Link href={action.href} className="mt-2 inline-block text-xs font-medium text-blue-600 hover:text-blue-700">
+                {action.label}
+              </Link>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function AdminDashboard() {
   const { data: hospitals } = useQuery({
     queryKey: ['hospitals-count'],
@@ -57,6 +146,8 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
+      <OnboardingBanner doctorCount={doctors?.total ?? 1} />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Admin Dashboard</h1>

@@ -81,6 +81,16 @@ export const updateProfileSchema = z.object({
   phone: z.string().optional(),
 })
 
+export const acceptInviteSchema = z
+  .object({
+    password: strongPassword,
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
+
 export const inviteDoctorSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
   lastName: z.string().min(2, 'Last name is required'),
@@ -118,5 +128,6 @@ export type CreateHospitalFormData = z.infer<typeof createHospitalSchema>
 export type AssignDoctorFormData = z.infer<typeof assignDoctorSchema>
 export type CreateRecordFormData = z.infer<typeof createRecordSchema>
 export type UpdateProfileFormData = z.infer<typeof updateProfileSchema>
+export type AcceptInviteFormData = z.infer<typeof acceptInviteSchema>
 export type InviteDoctorFormData = z.infer<typeof inviteDoctorSchema>
 export type HospitalRegistrationFormData = z.infer<typeof hospitalRegistrationSchema>

@@ -20,7 +20,7 @@ export function RegisterForm() {
 
   const { data: hospitals } = useQuery({
     queryKey: ['hospitals-public'],
-    queryFn: () => hospitalsService.list({ limit: 100 }),
+    queryFn: () => hospitalsService.listPublic(),
     retry: false,
   })
 
