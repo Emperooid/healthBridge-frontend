@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { Hospital, HospitalDoctor, CreateHospitalData, AssignDoctorData, PaginatedResponse } from '@/types'
+import type { Hospital, HospitalDoctor, CreateHospitalData, AssignDoctorData, PaginatedResponse, RegisterHospitalData } from '@/types'
 
 export interface HospitalFilters {
   search?: string
@@ -33,4 +33,10 @@ export const hospitalsService = {
       specialization: data.specialization,
       licenseNumber: data.licenseNumber,
     }).then((r) => r.data),
+
+  listPublic: () =>
+    api.get<{ data: { id: string; name: string }[] }>('/hospitals/public').then((r) => r.data),
+
+  registerHospital: (data: RegisterHospitalData) =>
+    api.post('/hospitals/register', data).then((r) => r.data),
 }

@@ -30,4 +30,7 @@ export const usersService = {
 
   delete: (id: string) =>
     api.delete(`/users/${id}`).then((r) => r.data),
+
+  invite: (data: { firstName: string; lastName: string; email: string; specialization?: string; hospitalId?: string }) =>
+    api.post('/users/invite', data).then((r) => r.data),
 }

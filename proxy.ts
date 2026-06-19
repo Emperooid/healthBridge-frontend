@@ -17,7 +17,7 @@ async function getSession(req: NextRequest): Promise<SessionPayload | null> {
   }
 }
 
-const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email']
+const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/register-hospital']
 
 const PROTECTED_PREFIXES = [
   '/dashboard',

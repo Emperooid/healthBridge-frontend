@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
 import { authService } from '@/services/auth.service'
+import { hospitalsService } from '@/services/hospitals.service'
 import { useAuthStore } from '@/store/auth.store'
 import { registerSchema, type RegisterFormData } from '@/utils/validators'
 
@@ -16,6 +17,12 @@ export function RegisterForm() {
   const { setUser } = useAuthStore()
   const [pendingEmail, setPendingEmail] = useState<string | null>(null)
   const [resending, setResending] = useState(false)
+
+  const { data: hospitals } = useQuery({
+    queryKey: ['hospitals-public'],
+    queryFn: () => hospitalsService.list({ limit: 100 }),
+    retry: false,
+  })
 
   const {
     register,
@@ -25,16 +32,11 @@ export function RegisterForm() {
 
   async function onSubmit(data: RegisterFormData) {
     try {
-      const response = await authService.register(data)
-      // Store tokens in memory so the resend call can use them (no session cookie — user
-      // cannot access the dashboard until their email is verified)
+      const response = await authService.register({ ...data, role: 'patient' })
       setUser(response.user, response.accessToken)
       setPendingEmail(data.email)
     } catch (err: unknown) {
-      const message =
-        (err as { message?: string })?.message ??
-        'Registration failed. Please try again.'
-      toast.error(message)
+      toast.error((err as { message?: string })?.message ?? 'Registration failed. Please try again.')
     }
   }
 
@@ -74,10 +76,7 @@ export function RegisterForm() {
             {resending ? 'Sending…' : 'Resend verification email'}
           </button>
         </p>
-        <Link
-          href="/login"
-          className="mt-4 inline-block text-sm font-medium text-slate-500 hover:text-slate-700"
-        >
+        <Link href="/login" className="mt-4 inline-block text-sm font-medium text-slate-500 hover:text-slate-700">
           Back to sign in
         </Link>
       </div>
@@ -86,7 +85,7 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Input
           label="First name"
           type="text"
@@ -104,44 +103,68 @@ export function RegisterForm() {
           {...register('lastName')}
         />
       </div>
+
       <Input
         label="Email address"
         type="email"
-        placeholder="you@hospital.com"
+        placeholder="you@example.com"
         autoComplete="email"
         error={errors.email?.message}
         {...register('email')}
       />
+
       <Input
         label="Password"
         type="password"
         placeholder="Min. 8 characters"
         autoComplete="new-password"
         error={errors.password?.message}
-        hint="Min 8 chars — uppercase, lowercase, number, and special character required"
+        hint="Uppercase, lowercase, number & special character required"
         {...register('password')}
       />
-      <Select
-        label="Account type"
-        options={[
-          { value: 'patient', label: 'Patient' },
-          { value: 'doctor', label: 'Doctor' },
-          { value: 'admin', label: 'Administrator' },
-        ]}
-        placeholder="Select your role"
-        error={errors.role?.message}
-        {...register('role')}
-      />
+
+      {/* Hospital selector */}
+      <div className="space-y-1.5">
+        <label className="block text-sm font-medium text-slate-700">
+          Your hospital <span className="text-slate-400 font-normal">(optional)</span>
+        </label>
+        <select
+          {...register('hospitalId')}
+          className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+        >
+          <option value="">Select your hospital</option>
+          {hospitals?.data?.map((h) => (
+            <option key={h.id} value={h.id}>{h.name}</option>
+          ))}
+        </select>
+        <p className="text-xs text-slate-500">You can update this later in your profile.</p>
+      </div>
 
       <Button type="submit" loading={isSubmitting} className="w-full">
-        Create account
+        Create patient account
       </Button>
+
+      {/* Doctor callout */}
+      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+        <p className="text-xs font-semibold text-slate-700">Are you a healthcare professional?</p>
+        <p className="mt-0.5 text-xs text-slate-500">
+          Doctors are invited by their hospital admin — contact your hospital administrator to get access.
+        </p>
+      </div>
+
+      {/* Hospital callout */}
+      <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3">
+        <p className="text-xs font-semibold text-blue-800">Want to bring your hospital to HealthBridge?</p>
+        <p className="mt-0.5 text-xs text-blue-700">
+          <Link href="/register-hospital" className="font-medium underline underline-offset-2 hover:text-blue-900">
+            Register your institution →
+          </Link>
+        </p>
+      </div>
 
       <p className="text-center text-sm text-slate-600">
         Already have an account?{' '}
-        <Link href="/login" className="font-medium text-blue-600 hover:text-blue-700">
-          Sign in
-        </Link>
+        <Link href="/login" className="font-medium text-blue-600 hover:text-blue-700">Sign in</Link>
       </p>
 
       <p className="text-center text-xs text-slate-500">

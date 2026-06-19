@@ -20,7 +20,7 @@ export const registerSchema = z.object({
   lastName: z.string().min(2, 'Last name must be at least 2 characters').max(50),
   email: z.string().email('Please enter a valid email address').max(254),
   password: strongPassword,
-  role: z.enum(['admin', 'doctor', 'patient'] as const),
+  hospitalId: z.string().optional(),
 })
 
 export const forgotPasswordSchema = z.object({
@@ -81,6 +81,34 @@ export const updateProfileSchema = z.object({
   phone: z.string().optional(),
 })
 
+export const inviteDoctorSchema = z.object({
+  firstName: z.string().min(2, 'First name is required'),
+  lastName: z.string().min(2, 'Last name is required'),
+  email: z.string().email('Please enter a valid email address'),
+  specialization: z.string().optional(),
+  hospitalId: z.string().optional(),
+})
+
+export const hospitalRegistrationSchema = z
+  .object({
+    hospitalName: z.string().min(2, 'Hospital name is required'),
+    hospitalType: z.enum(['GENERAL', 'CLINIC', 'SPECIALIST', 'TEACHING', 'PRIVATE'] as const),
+    address: z.string().min(5, 'Full address is required'),
+    city: z.string().min(2, 'City is required'),
+    state: z.string().min(2, 'State is required'),
+    licenseNumber: z.string().min(3, 'License/registration number is required'),
+    adminFirstName: z.string().min(2, 'First name is required'),
+    adminLastName: z.string().min(2, 'Last name is required'),
+    adminEmail: z.string().email('Please enter a valid email address'),
+    adminPhone: z.string().min(8, 'Phone number is required'),
+    password: strongPassword,
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
+
 export type LoginFormData = z.infer<typeof loginSchema>
 export type RegisterFormData = z.infer<typeof registerSchema>
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
@@ -90,3 +118,5 @@ export type CreateHospitalFormData = z.infer<typeof createHospitalSchema>
 export type AssignDoctorFormData = z.infer<typeof assignDoctorSchema>
 export type CreateRecordFormData = z.infer<typeof createRecordSchema>
 export type UpdateProfileFormData = z.infer<typeof updateProfileSchema>
+export type InviteDoctorFormData = z.infer<typeof inviteDoctorSchema>
+export type HospitalRegistrationFormData = z.infer<typeof hospitalRegistrationSchema>

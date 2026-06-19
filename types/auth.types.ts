@@ -31,6 +31,29 @@ export interface RegisterCredentials {
   email: string
   password: string
   role: UserRole
+  hospitalId?: string
+}
+
+export interface InviteDoctorData {
+  firstName: string
+  lastName: string
+  email: string
+  specialization?: string
+  hospitalId?: string
+}
+
+export interface RegisterHospitalData {
+  hospitalName: string
+  hospitalType: string
+  address: string
+  city: string
+  state: string
+  licenseNumber: string
+  adminFirstName: string
+  adminLastName: string
+  adminEmail: string
+  adminPhone: string
+  password: string
 }
 
 export interface AuthResponse {

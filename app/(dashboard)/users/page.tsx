@@ -9,6 +9,7 @@ import { Select } from '@/components/ui/Select'
 import { Avatar } from '@/components/ui/Avatar'
 import { Pagination } from '@/components/ui/Pagination'
 import { TableSkeleton } from '@/components/ui/Skeleton'
+import { InviteDoctorModal } from '@/features/hospitals/components/InviteDoctorModal'
 import { usersService } from '@/services/users.service'
 import { formatDate } from '@/utils/format'
 import type { UserRole } from '@/types'
@@ -22,6 +23,7 @@ const roleBadge: Record<string, 'purple' | 'info' | 'success'> = {
 export default function UsersPage() {
   const [role, setRole] = useState('')
   const [page, setPage] = useState(1)
+  const [inviteOpen, setInviteOpen] = useState(false)
   const queryClient = useQueryClient()
 
   const { data, isLoading } = useQuery({
@@ -51,9 +53,17 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-bold text-slate-900">User Management</h1>
-        <p className="mt-0.5 text-sm text-slate-500">{data?.total ?? 0} total users</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">User Management</h1>
+          <p className="mt-0.5 text-sm text-slate-500">{data?.total ?? 0} total users</p>
+        </div>
+        <Button onClick={() => setInviteOpen(true)}>
+          <svg className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Invite Doctor
+        </Button>
       </div>
 
       {/* Filters */}
@@ -149,6 +159,7 @@ export default function UsersPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               <p className="text-sm font-medium">No users found</p>
+              <p className="mt-1 text-xs text-slate-400">Invite a doctor to get started</p>
             </div>
           )}
         </div>
@@ -159,6 +170,12 @@ export default function UsersPage() {
           </div>
         )}
       </div>
+
+      <InviteDoctorModal
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['users'] })}
+      />
     </div>
   )
 }
