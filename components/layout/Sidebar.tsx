@@ -180,17 +180,25 @@ const navSections: NavSection[] = [
 export function Sidebar() {
   const pathname = usePathname()
   const { user } = useAuthStore()
-  const { sidebarOpen } = useUIStore()
+  const { sidebarOpen, setSidebarOpen } = useUIStore()
+
+  function handleNavClick() {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setSidebarOpen(false)
+    }
+  }
 
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-40 flex flex-col bg-[#0F172A] transition-all duration-300 ease-in-out',
-        sidebarOpen ? 'w-60' : 'w-14'
+        'fixed inset-y-0 left-0 z-40 flex flex-col bg-[#0F172A] transition-all duration-300 ease-in-out w-60',
+        sidebarOpen
+          ? 'translate-x-0'
+          : '-translate-x-full lg:translate-x-0 lg:w-14'
       )}
     >
       {/* Logo */}
-      <div className={cn('flex h-14 items-center border-b border-white/5', sidebarOpen ? 'px-4 gap-3' : 'justify-center')}>
+      <div className={cn('flex h-14 shrink-0 items-center border-b border-white/5', sidebarOpen ? 'px-4 gap-3' : 'justify-center')}>
         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-blue-600">
           <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -224,6 +232,7 @@ export function Sidebar() {
                       key={item.href}
                       href={item.href}
                       title={!sidebarOpen ? item.label : undefined}
+                      onClick={handleNavClick}
                       className={cn(
                         'flex items-center rounded-md text-sm font-medium transition-all duration-150',
                         sidebarOpen ? 'px-3 py-2 gap-2.5' : 'justify-center p-2',
@@ -245,7 +254,7 @@ export function Sidebar() {
 
       {/* User info */}
       {sidebarOpen && user && (
-        <div className="border-t border-white/5 p-3">
+        <div className="shrink-0 border-t border-white/5 p-3">
           <div className="flex items-center gap-2.5 rounded-md px-2 py-1.5">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
               {user.name?.charAt(0).toUpperCase()}

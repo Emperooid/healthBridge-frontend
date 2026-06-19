@@ -99,7 +99,7 @@ function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 rounded-lg border border-slate-200 bg-white shadow-lg ring-1 ring-slate-900/5 z-50">
+        <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-lg border border-slate-200 bg-white shadow-lg ring-1 ring-slate-900/5 z-50">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <p className="text-sm font-semibold text-slate-900">Notifications</p>
             {count > 0 && (
@@ -166,13 +166,11 @@ export function Navbar() {
     } catch {
       // ignore network errors on logout
     }
-    // Belt-and-braces cleanup of any stale storage keys from older versions
     localStorage.removeItem('hb_auth')
     localStorage.removeItem('hb_access_token')
     localStorage.removeItem('hb_refresh_token')
     sessionStorage.removeItem('hb_access_token')
     sessionStorage.removeItem('hb_refresh_token')
-    // Server action: deletes cookie + server-side redirect (not intercepted by Turbopack)
     await clearSession()
   }
 
@@ -180,7 +178,7 @@ export function Navbar() {
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-slate-200 bg-white px-4">
       <button
         onClick={toggleSidebar}
-        className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
         aria-label="Toggle sidebar"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -188,20 +186,24 @@ export function Navbar() {
         </svg>
       </button>
 
-      <div className="flex items-center gap-1.5 text-sm">
-        <span className="text-slate-400">HealthBridge</span>
-        <span className="text-slate-300">/</span>
-        <span className="font-medium text-slate-700">{getBreadcrumb(pathname)}</span>
+      {/* Breadcrumb */}
+      <div className="flex min-w-0 items-center gap-1.5 text-sm">
+        <span className="hidden sm:inline text-slate-400">HealthBridge</span>
+        <span className="hidden sm:inline text-slate-300">/</span>
+        <span className="truncate font-medium text-slate-700">{getBreadcrumb(pathname)}</span>
       </div>
 
       <div className="ml-auto flex items-center gap-2">
+        {/* Role badge — hidden on very small screens */}
         {user && (
-          <Badge variant={roleBadgeVariant[user.role]}>
-            {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-          </Badge>
+          <span className="hidden sm:block">
+            <Badge variant={roleBadgeVariant[user.role]}>
+              {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+            </Badge>
+          </span>
         )}
 
-        <div className="h-5 w-px bg-slate-200" />
+        <div className="hidden sm:block h-5 w-px bg-slate-200" />
 
         <NotificationBell />
 
@@ -212,7 +214,7 @@ export function Navbar() {
             href="/profile"
             className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-slate-50 transition-colors"
           >
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
               {user.name?.charAt(0).toUpperCase()}
             </div>
             <div className="hidden sm:block text-left">
@@ -224,12 +226,12 @@ export function Navbar() {
 
         <button
           onClick={handleLogout}
-          className="flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+          className="flex h-8 items-center gap-1.5 rounded-md px-2 sm:px-2.5 text-xs font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"
         >
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
-          Sign out
+          <span className="hidden sm:inline">Sign out</span>
         </button>
       </div>
     </header>

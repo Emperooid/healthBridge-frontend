@@ -80,7 +80,7 @@ export default function AppointmentsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Appointments</h1>
           <p className="mt-0.5 text-sm text-slate-500">{data?.total ?? 0} total</p>

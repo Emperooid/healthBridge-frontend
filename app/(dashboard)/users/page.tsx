@@ -51,11 +51,9 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">User Management</h1>
-          <p className="mt-0.5 text-sm text-slate-500">{data?.total ?? 0} total users</p>
-        </div>
+      <div>
+        <h1 className="text-xl font-bold text-slate-900">User Management</h1>
+        <p className="mt-0.5 text-sm text-slate-500">{data?.total ?? 0} total users</p>
       </div>
 
       {/* Filters */}
@@ -115,7 +113,7 @@ export default function UsersPage() {
                       {formatDate(user.createdAt)}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
                         <select
                           value={user.role}
                           onChange={(e) =>

@@ -57,7 +57,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Admin Dashboard</h1>
           <p className="mt-0.5 text-sm text-slate-500">Platform overview</p>
@@ -73,7 +73,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <StatCard
           title="Hospitals"
           value={hospitals?.total ?? '—'}
