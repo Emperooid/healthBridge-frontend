@@ -13,6 +13,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { TableSkeleton } from '@/components/ui/Skeleton'
 import { labsService } from '@/services/labs.service'
+import { PatientSearchField } from '@/features/patients/components/PatientSearchField'
 import { useAuthStore } from '@/store/auth.store'
 import { formatDate, formatDateTime } from '@/utils/format'
 import type { LabOrderStatus, LabResult } from '@/types'
@@ -95,6 +96,7 @@ export default function LabsPage() {
   const queryClient = useQueryClient()
   const [orderOpen, setOrderOpen] = useState(false)
   const [viewResultsId, setViewResultsId] = useState<string | null>(null)
+  const [selectedPatientName, setSelectedPatientName] = useState('')
   const isDoctor = user?.role === 'doctor'
   const isPatient = user?.role === 'patient'
 
@@ -120,6 +122,7 @@ export default function LabsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lab-orders'] })
       form.reset({ tests: [{ name: '' }] })
+      setSelectedPatientName('')
       setOrderOpen(false)
       toast.success('Lab order created')
     },
@@ -136,7 +139,7 @@ export default function LabsPage() {
           </p>
         </div>
         {isDoctor && (
-          <Button size="sm" onClick={() => setOrderOpen(true)}>
+          <Button size="sm" onClick={() => { setOrderOpen(true); setSelectedPatientName('') }}>
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
@@ -207,17 +210,25 @@ export default function LabsPage() {
       {/* Order modal */}
       <Modal
         open={orderOpen}
-        onClose={() => setOrderOpen(false)}
+        onClose={() => { setOrderOpen(false); setSelectedPatientName(''); form.reset({ tests: [{ name: '' }] }) }}
         title="Order Lab Test"
         description="Create a lab order for a patient"
         size="md"
       >
         <form onSubmit={form.handleSubmit((d) => createMutation.mutate(d))} className="space-y-4">
-          <Input
-            label="Patient ID"
-            placeholder="Patient's user ID"
+          <PatientSearchField
+            value={form.watch('patientId') ?? ''}
+            displayName={selectedPatientName}
+            onSelect={(id, name) => {
+              form.setValue('patientId', id, { shouldValidate: true })
+              setSelectedPatientName(name)
+            }}
+            onClear={() => {
+              form.setValue('patientId', '', { shouldValidate: true })
+              setSelectedPatientName('')
+            }}
             error={form.formState.errors.patientId?.message}
-            {...form.register('patientId')}
+            doctorId={user?.id}
           />
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-700">Tests</label>
@@ -253,7 +264,7 @@ export default function LabsPage() {
             {...form.register('notes')}
           />
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setOrderOpen(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => { setOrderOpen(false); setSelectedPatientName(''); form.reset({ tests: [{ name: '' }] }) }}>Cancel</Button>
             <Button type="submit" disabled={createMutation.isPending}>
               {createMutation.isPending ? 'Ordering...' : 'Place Order'}
             </Button>

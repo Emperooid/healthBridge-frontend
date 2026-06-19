@@ -1,7 +1,10 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -9,10 +12,12 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
 import { usersService } from '@/services/users.service'
+import { patientsService } from '@/services/patients.service'
 import { useAuthStore } from '@/store/auth.store'
 import { updateProfileSchema, type UpdateProfileFormData } from '@/utils/validators'
 import { ChangePasswordForm } from '@/features/auth/components/ChangePasswordForm'
 import { formatDate } from '@/utils/format'
+import type { BloodType } from '@/types'
 
 const roleBadge: Record<string, 'purple' | 'info' | 'success'> = {
   admin: 'purple',
@@ -20,9 +25,23 @@ const roleBadge: Record<string, 'purple' | 'info' | 'success'> = {
   patient: 'success',
 }
 
+const healthSchema = z.object({
+  bloodType: z.string().optional(),
+  gender: z.string().optional(),
+  dateOfBirth: z.string().optional(),
+  emergencyContact: z.string().optional(),
+})
+
+type HealthForm = z.infer<typeof healthSchema>
+
+const bloodTypeOptions: BloodType[] = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+
 export default function ProfilePage() {
   const { user, setUser, accessToken } = useAuthStore()
+  const queryClient = useQueryClient()
+  const isPatient = user?.role === 'patient'
 
+  // Basic profile form
   const {
     register,
     handleSubmit,
@@ -50,6 +69,58 @@ export default function ProfilePage() {
     } catch {
       toast.error('Failed to update profile')
     }
+  }
+
+  // Patient health info
+  const { data: patientProfile } = useQuery({
+    queryKey: ['patient-me'],
+    queryFn: () => patientsService.me(),
+    enabled: isPatient,
+  })
+
+  const [allergies, setAllergies] = useState<string[]>([])
+  const [allergyInput, setAllergyInput] = useState('')
+
+  const healthForm = useForm<HealthForm>({
+    resolver: zodResolver(healthSchema),
+    defaultValues: { bloodType: '', gender: '', dateOfBirth: '', emergencyContact: '' },
+  })
+
+  useEffect(() => {
+    if (patientProfile) {
+      healthForm.reset({
+        bloodType: patientProfile.bloodType ?? '',
+        gender: patientProfile.gender ?? '',
+        dateOfBirth: patientProfile.dateOfBirth ? patientProfile.dateOfBirth.slice(0, 10) : '',
+        emergencyContact: patientProfile.emergencyContact ?? '',
+      })
+      setAllergies(patientProfile.allergies ?? [])
+    }
+  }, [patientProfile, healthForm])
+
+  const updateHealthMutation = useMutation({
+    mutationFn: (data: HealthForm) =>
+      patientsService.update(patientProfile!.id, {
+        bloodType: (data.bloodType as BloodType) || undefined,
+        gender: (data.gender as 'MALE' | 'FEMALE' | 'OTHER') || undefined,
+        dateOfBirth: data.dateOfBirth || undefined,
+        emergencyContact: data.emergencyContact || undefined,
+        allergies,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patient-me'] })
+      queryClient.invalidateQueries({ queryKey: ['patient-profile'] })
+      toast.success('Health information updated')
+    },
+    onError: () => toast.error('Failed to update health information'),
+  })
+
+  function addAllergy() {
+    const trimmed = allergyInput.trim()
+    if (trimmed && !allergies.includes(trimmed)) {
+      setAllergies([...allergies, trimmed])
+    }
+    setAllergyInput('')
   }
 
   if (!user) return null
@@ -91,7 +162,7 @@ export default function ProfilePage() {
         </div>
       </Card>
 
-      {/* Edit form */}
+      {/* Personal info form */}
       <Card>
         <CardHeader>
           <CardTitle>Personal Information</CardTitle>
@@ -133,6 +204,124 @@ export default function ProfilePage() {
           </div>
         </form>
       </Card>
+
+      {/* Patient health info */}
+      {isPatient && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Health Information</CardTitle>
+          </CardHeader>
+          <p className="mb-4 text-xs text-slate-500">
+            This information helps your care team provide better treatment.
+          </p>
+          <form
+            onSubmit={healthForm.handleSubmit((d) => updateHealthMutation.mutate(d))}
+            className="space-y-4"
+          >
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-slate-700">Blood type</label>
+                <select
+                  {...healthForm.register('bloodType')}
+                  className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Select blood type</option>
+                  {bloodTypeOptions.map((bt) => (
+                    <option key={bt} value={bt}>{bt}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-slate-700">Gender</label>
+                <select
+                  {...healthForm.register('gender')}
+                  className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Prefer not to say</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-slate-700">Date of birth</label>
+                <input
+                  type="date"
+                  {...healthForm.register('dateOfBirth')}
+                  className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              <Input
+                label="Emergency contact"
+                placeholder="Name and phone number"
+                {...healthForm.register('emergencyContact')}
+              />
+            </div>
+
+            {/* Allergies tag input */}
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-slate-700">Allergies</label>
+              {allergies.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  {allergies.map((allergy) => (
+                    <span
+                      key={allergy}
+                      className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800"
+                    >
+                      {allergy}
+                      <button
+                        type="button"
+                        onClick={() => setAllergies(allergies.filter((a) => a !== allergy))}
+                        className="ml-0.5 text-amber-500 hover:text-amber-800 transition-colors"
+                        aria-label={`Remove ${allergy}`}
+                      >
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={allergyInput}
+                  onChange={(e) => setAllergyInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      addAllergy()
+                    }
+                  }}
+                  placeholder="e.g. Penicillin, Peanuts"
+                  className="h-9 flex-1 rounded-md border border-slate-300 px-3 text-sm placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={addAllergy}
+                  disabled={!allergyInput.trim()}
+                  className="rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-40 transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+              <p className="text-xs text-slate-400">Press Enter or click Add after each allergy</p>
+            </div>
+
+            <div className="flex justify-end pt-1">
+              <Button type="submit" loading={updateHealthMutation.isPending}>
+                Save health info
+              </Button>
+            </div>
+          </form>
+        </Card>
+      )}
 
       {/* Security */}
       <Card>

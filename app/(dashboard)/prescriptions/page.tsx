@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { TableSkeleton } from '@/components/ui/Skeleton'
 import { prescriptionsService } from '@/services/prescriptions.service'
+import { PatientSearchField } from '@/features/patients/components/PatientSearchField'
 import { useAuthStore } from '@/store/auth.store'
 import { formatDate } from '@/utils/format'
 import type { PrescriptionStatus } from '@/types'
@@ -49,6 +50,7 @@ export default function PrescriptionsPage() {
   const { user } = useAuthStore()
   const queryClient = useQueryClient()
   const [createOpen, setCreateOpen] = useState(false)
+  const [selectedPatientName, setSelectedPatientName] = useState('')
   const isDoctor = user?.role === 'doctor'
   const isPatient = user?.role === 'patient'
 
@@ -67,6 +69,7 @@ export default function PrescriptionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['prescriptions'] })
       form.reset()
+      setSelectedPatientName('')
       setCreateOpen(false)
       toast.success('Prescription created')
     },
@@ -93,7 +96,7 @@ export default function PrescriptionsPage() {
           </p>
         </div>
         {isDoctor && (
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <Button size="sm" onClick={() => { setCreateOpen(true); setSelectedPatientName('') }}>
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
@@ -172,17 +175,25 @@ export default function PrescriptionsPage() {
       {/* Create modal (doctor only) */}
       <Modal
         open={createOpen}
-        onClose={() => setCreateOpen(false)}
+        onClose={() => { setCreateOpen(false); setSelectedPatientName(''); form.reset() }}
         title="New Prescription"
         description="Write a prescription for a patient"
         size="md"
       >
         <form onSubmit={form.handleSubmit((d) => createMutation.mutate(d))} className="space-y-4">
-          <Input
-            label="Patient ID"
-            placeholder="Patient's user ID"
+          <PatientSearchField
+            value={form.watch('patientId') ?? ''}
+            displayName={selectedPatientName}
+            onSelect={(id, name) => {
+              form.setValue('patientId', id, { shouldValidate: true })
+              setSelectedPatientName(name)
+            }}
+            onClear={() => {
+              form.setValue('patientId', '', { shouldValidate: true })
+              setSelectedPatientName('')
+            }}
             error={form.formState.errors.patientId?.message}
-            {...form.register('patientId')}
+            doctorId={user?.id}
           />
           <Input
             label="Drug / Medication"
@@ -216,7 +227,7 @@ export default function PrescriptionsPage() {
             {...form.register('instructions')}
           />
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => { setCreateOpen(false); setSelectedPatientName(''); form.reset() }}>Cancel</Button>
             <Button type="submit" disabled={createMutation.isPending}>
               {createMutation.isPending ? 'Creating...' : 'Create Prescription'}
             </Button>
