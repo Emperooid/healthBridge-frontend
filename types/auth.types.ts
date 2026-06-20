@@ -52,7 +52,7 @@ export interface RegisterHospitalData {
   licenseNumber: string
   adminFirstName: string
   adminLastName: string
-  adminEmail: string
+  email: string
   adminPhone: string
   adminPassword: string
 }

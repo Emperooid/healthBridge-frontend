@@ -34,12 +34,13 @@ export function RegisterHospitalForm() {
   })
 
   async function onSubmit(data: HospitalRegistrationFormData) {
-    const { confirmPassword: _, hospitalName, adminPassword, ...rest } = data
+    const { confirmPassword: _, hospitalName, adminPassword, adminEmail, ...rest } = data
     try {
       const response = await hospitalsService.registerHospital({
         ...rest,
         name: hospitalName,
         adminPassword,
+        email: adminEmail,   // backend DTO field is `email`, not `adminEmail`
       })
       const user = {
         ...response.user,
