@@ -38,6 +38,7 @@ export interface InviteDoctorData {
   firstName: string
   lastName: string
   email: string
+  licenseNumber: string
   specialization?: string
   hospitalId?: string
 }

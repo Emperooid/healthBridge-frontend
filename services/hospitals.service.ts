@@ -35,7 +35,7 @@ export const hospitalsService = {
     }).then((r) => r.data),
 
   listPublic: () =>
-    api.get<{ data: { id: string; name: string }[] }>('/hospitals/public').then((r) => r.data),
+    api.get<{ id: string; name: string; address?: string; phone?: string; email?: string }[]>('/hospitals/public').then((r) => r.data),
 
   registerHospital: (data: RegisterHospitalData) =>
     api.post('/hospitals/register', data).then((r) => r.data),

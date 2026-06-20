@@ -95,6 +95,7 @@ export const inviteDoctorSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
   lastName: z.string().min(2, 'Last name is required'),
   email: z.string().email('Please enter a valid email address'),
+  licenseNumber: z.string().min(2, 'License number is required'),
   specialization: z.string().optional(),
   hospitalId: z.string().optional(),
 })

@@ -81,6 +81,13 @@ export function InviteDoctorModal({ open, onClose, onSuccess, hospitalId }: Invi
         />
 
         <Input
+          label="License number"
+          placeholder="e.g. MED-2024-001"
+          error={errors.licenseNumber?.message}
+          {...register('licenseNumber')}
+        />
+
+        <Input
           label="Specialization"
           placeholder="e.g. Cardiology, Pediatrics (optional)"
           error={errors.specialization?.message}

@@ -133,7 +133,7 @@ export function RegisterForm() {
           className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
         >
           <option value="">Select your hospital</option>
-          {hospitals?.data?.map((h) => (
+          {hospitals?.map((h) => (
             <option key={h.id} value={h.id}>{h.name}</option>
           ))}
         </select>
