@@ -40,7 +40,7 @@ export function RegisterHospitalForm() {
         ...rest,
         name: hospitalName,
         adminPassword,
-        email: adminEmail,   // backend DTO field is `email`, not `adminEmail`
+        adminEmail,
       })
       const user = {
         ...response.user,
