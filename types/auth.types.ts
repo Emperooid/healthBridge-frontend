@@ -44,7 +44,7 @@ export interface InviteDoctorData {
 }
 
 export interface RegisterHospitalData {
-  hospitalName: string
+  name: string
   hospitalType: string
   address: string
   city: string
@@ -54,7 +54,7 @@ export interface RegisterHospitalData {
   adminLastName: string
   adminEmail: string
   adminPhone: string
-  password: string
+  adminPassword: string
 }
 
 export interface AuthResponse {

@@ -103,7 +103,7 @@ export const inviteDoctorSchema = z.object({
 export const hospitalRegistrationSchema = z
   .object({
     hospitalName: z.string().min(2, 'Hospital name is required'),
-    hospitalType: z.enum(['GENERAL', 'CLINIC', 'SPECIALIST', 'TEACHING', 'PRIVATE'] as const),
+    hospitalType: z.enum(['GENERAL', 'CLINIC', 'SPECIALIST', 'TEACHING', 'PRIVATE', 'FEDERAL'] as const),
     address: z.string().min(5, 'Full address is required'),
     city: z.string().min(2, 'City is required'),
     state: z.string().min(2, 'State is required'),
@@ -112,10 +112,10 @@ export const hospitalRegistrationSchema = z
     adminLastName: z.string().min(2, 'Last name is required'),
     adminEmail: z.string().email('Please enter a valid email address'),
     adminPhone: z.string().min(8, 'Phone number is required'),
-    password: strongPassword,
+    adminPassword: strongPassword,
     confirmPassword: z.string(),
   })
-  .refine((d) => d.password === d.confirmPassword, {
+  .refine((d) => d.adminPassword === d.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
   })

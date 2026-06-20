@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { Hospital, HospitalDoctor, CreateHospitalData, AssignDoctorData, PaginatedResponse, RegisterHospitalData } from '@/types'
+import type { Hospital, HospitalDoctor, CreateHospitalData, AssignDoctorData, PaginatedResponse, RegisterHospitalData, User } from '@/types'
 
 export interface HospitalFilters {
   search?: string
@@ -38,5 +38,7 @@ export const hospitalsService = {
     api.get<{ id: string; name: string; address?: string; phone?: string; email?: string }[]>('/hospitals/public').then((r) => r.data),
 
   registerHospital: (data: RegisterHospitalData) =>
-    api.post('/hospitals/register', data).then((r) => r.data),
+    api.post<{ user: User & { role: string }; accessToken: string; hospital: { id: string; name: string } }>(
+      '/hospitals/register', data
+    ).then((r) => r.data),
 }

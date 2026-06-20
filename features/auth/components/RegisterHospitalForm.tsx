@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
@@ -8,7 +8,9 @@ import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { hospitalsService } from '@/services/hospitals.service'
+import { useAuthStore } from '@/store/auth.store'
 import { hospitalRegistrationSchema, type HospitalRegistrationFormData } from '@/utils/validators'
+import type { UserRole } from '@/types'
 
 const HOSPITAL_TYPES = [
   { value: 'GENERAL', label: 'General Hospital' },
@@ -16,10 +18,12 @@ const HOSPITAL_TYPES = [
   { value: 'SPECIALIST', label: 'Specialist Hospital' },
   { value: 'TEACHING', label: 'Teaching Hospital' },
   { value: 'PRIVATE', label: 'Private Hospital' },
+  { value: 'FEDERAL', label: 'Federal Hospital' },
 ]
 
 export function RegisterHospitalForm() {
-  const [success, setSuccess] = useState(false)
+  const router = useRouter()
+  const { setUser } = useAuthStore()
 
   const {
     register,
@@ -30,47 +34,24 @@ export function RegisterHospitalForm() {
   })
 
   async function onSubmit(data: HospitalRegistrationFormData) {
+    const { confirmPassword: _, hospitalName, adminPassword, ...rest } = data
     try {
-      const { confirmPassword: _, ...payload } = data
-      await hospitalsService.registerHospital({
-        hospitalName: payload.hospitalName,
-        hospitalType: payload.hospitalType,
-        address: payload.address,
-        city: payload.city,
-        state: payload.state,
-        licenseNumber: payload.licenseNumber,
-        adminFirstName: payload.adminFirstName,
-        adminLastName: payload.adminLastName,
-        adminEmail: payload.adminEmail,
-        adminPhone: payload.adminPhone,
-        password: payload.password,
+      const response = await hospitalsService.registerHospital({
+        ...rest,
+        name: hospitalName,
+        adminPassword,
       })
-      setSuccess(true)
+      const user = {
+        ...response.user,
+        name: `${response.user.firstName ?? ''} ${response.user.lastName ?? ''}`.trim(),
+        role: ((response.user.role as string) ?? '').toLowerCase() as UserRole,
+      }
+      setUser(user, response.accessToken)
+      toast.success(`Welcome, ${user.firstName}! Your hospital is ready.`)
+      router.push('/dashboard/admin')
     } catch (err: unknown) {
       toast.error((err as { message?: string })?.message ?? 'Registration failed. Please try again.')
     }
-  }
-
-  if (success) {
-    return (
-      <div className="text-center py-8">
-        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-          <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h2 className="text-xl font-bold text-slate-900">Registration submitted!</h2>
-        <p className="mt-3 text-sm text-slate-600 max-w-sm mx-auto">
-          We&apos;ve received your hospital registration. Check your email for a verification link to activate your admin account.
-        </p>
-        <Link
-          href="/login"
-          className="mt-6 inline-block rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
-        >
-          Go to sign in
-        </Link>
-      </div>
-    )
   }
 
   return (
@@ -189,8 +170,8 @@ export function RegisterHospitalForm() {
             type="password"
             placeholder="Min. 8 characters"
             hint="Uppercase, lowercase, number & special character required"
-            error={errors.password?.message}
-            {...register('password')}
+            error={errors.adminPassword?.message}
+            {...register('adminPassword')}
           />
 
           <Input
