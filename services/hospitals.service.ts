@@ -35,7 +35,11 @@ export const hospitalsService = {
     }).then((r) => r.data),
 
   listPublic: () =>
-    api.get<{ id: string; name: string; address?: string; phone?: string; email?: string }[]>('/hospitals/public').then((r) => r.data),
+    api.get<{ id: string; name: string; address?: string; phone?: string; email?: string }[]>('/hospitals/public').then((r) => {
+      // Normalize: plain array (current backend) or paginated {data:[]} (old Render build)
+      const d = r.data as unknown
+      return (Array.isArray(d) ? d : (d as any)?.data ?? []) as { id: string; name: string; address?: string; phone?: string; email?: string }[]
+    }),
 
   registerHospital: (data: RegisterHospitalData) =>
     api.post<{ user: User & { role: string }; accessToken: string; hospital: { id: string; name: string } }>(
