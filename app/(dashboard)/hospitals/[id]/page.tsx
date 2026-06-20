@@ -195,7 +195,7 @@ export default function HospitalDetailPage(props: { params: Promise<{ id: string
                             </div>
                           </div>
                         </td>
-                        <td className="px-5 py-3 text-slate-600">{doctor.specialty ?? '—'}</td>
+                        <td className="px-5 py-3 text-slate-600">{doctor.specialization ?? '—'}</td>
                         <td className="px-5 py-3 font-medium text-slate-800">{doctor.patientCount ?? 0}</td>
                       </tr>
                     ))}
