@@ -31,8 +31,8 @@ export default function PatientDashboard() {
   })
 
   const { data: profile } = useQuery({
-    queryKey: ['patient-profile', user?.id],
-    queryFn: () => patientsService.getById(user!.id),
+    queryKey: ['patient-me'],
+    queryFn: () => patientsService.me(),
     enabled: !!user?.id,
   })
 
