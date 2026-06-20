@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { hospitalsService } from '@/services/hospitals.service'
 import { useAuthStore } from '@/store/auth.store'
+import { writeSession } from '@/app/actions/auth'
 import { hospitalRegistrationSchema, type HospitalRegistrationFormData } from '@/utils/validators'
-import type { UserRole } from '@/types'
+import type { User, UserRole } from '@/types'
 
 const HOSPITAL_TYPES = [
   { value: 'GENERAL', label: 'General Hospital' },
@@ -34,20 +35,45 @@ export function RegisterHospitalForm() {
   })
 
   async function onSubmit(data: HospitalRegistrationFormData) {
-    const { confirmPassword: _, hospitalName, adminPassword, adminEmail, ...rest } = data
+    const { confirmPassword: _, hospitalName, adminPassword, adminEmail, adminFirstName, adminLastName, ...rest } = data
     try {
       const response = await hospitalsService.registerHospital({
         ...rest,
         name: hospitalName,
         adminPassword,
         adminEmail,
+        adminFirstName,
+        adminLastName,
       })
-      const user = {
-        ...response.user,
-        name: `${response.user.firstName ?? ''} ${response.user.lastName ?? ''}`.trim(),
-        role: ((response.user.role as string) ?? '').toLowerCase() as UserRole,
+
+      const rawUser = response?.user
+
+      // If the backend didn't return a user object, decode the JWT to get the userId
+      let userId = rawUser?.id
+      if (!userId && response?.accessToken) {
+        try {
+          const payload = JSON.parse(atob(response.accessToken.split('.')[1]))
+          userId = payload.sub as string
+        } catch {}
       }
+
+      const firstName = rawUser?.firstName ?? adminFirstName
+      const lastName = rawUser?.lastName ?? adminLastName
+
+      const user: User = {
+        id: userId ?? '',
+        email: rawUser?.email ?? adminEmail,
+        firstName,
+        lastName,
+        name: `${firstName} ${lastName}`.trim(),
+        phone: rawUser?.phone,
+        role: ((rawUser?.role as string) ?? 'admin').toLowerCase() as UserRole,
+        isActive: rawUser?.isActive ?? true,
+        createdAt: rawUser?.createdAt ?? new Date().toISOString(),
+      }
+
       setUser(user, response.accessToken)
+      await writeSession(user.id, user.role, user.email, user.name)
       toast.success(`Welcome, ${user.firstName}! Your hospital is ready.`)
       router.push('/dashboard/admin')
     } catch (err: unknown) {
