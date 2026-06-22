@@ -88,7 +88,7 @@ function StatusScreen({ icon, title, message }: { icon: React.ReactNode; title: 
         <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
         <p className="mt-2 text-sm text-slate-500">{message}</p>
         <Link href="/login" className="mt-6 inline-block text-sm font-medium text-blue-600 hover:text-blue-700">
-          Sign in to HealthBridge →
+          Sign in to CliniLynk →
         </Link>
       </div>
     </div>
@@ -160,7 +160,7 @@ export default function SharedRecordsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
             </div>
-            <span className="text-sm font-bold text-slate-900">HealthBridge</span>
+            <span className="text-sm font-bold text-slate-900">CliniLynk</span>
           </div>
           <span className="text-xs text-slate-400">Read-only shared view</span>
         </div>
@@ -216,7 +216,7 @@ export default function SharedRecordsPage() {
         <p className="mt-8 text-center text-xs text-slate-400">
           Powered by{' '}
           <Link href="/login" className="text-blue-500 hover:underline">
-            HealthBridge
+            CliniLynk
           </Link>{' '}
           · Patient-controlled health records
         </p>

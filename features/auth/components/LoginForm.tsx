@@ -12,6 +12,7 @@ import { authService } from '@/services/auth.service'
 import { useAuthStore } from '@/store/auth.store'
 import { writeSession } from '@/app/actions/auth'
 import { loginSchema, type LoginFormData } from '@/utils/validators'
+import { cn } from '@/utils/cn'
 import type { UserRole } from '@/types'
 
 const MAX_ATTEMPTS = 5
@@ -23,9 +24,18 @@ const roleDashboards: Record<UserRole, string> = {
   patient: '/dashboard/patient',
 }
 
+type SignInRole = 'patient' | 'admin' | 'doctor'
+
+const ROLE_TABS: { id: SignInRole; label: string }[] = [
+  { id: 'patient', label: 'Patient' },
+  { id: 'admin', label: 'Hospital Admin' },
+  { id: 'doctor', label: 'Doctor' },
+]
+
 export function LoginForm() {
   const router = useRouter()
   const { setUser } = useAuthStore()
+  const [selectedRole, setSelectedRole] = useState<SignInRole>('patient')
 
   // Brute-force protection
   const failCount = useRef(0)
@@ -109,71 +119,116 @@ export function LoginForm() {
   const isLocked = lockSecondsLeft > 0
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-      <Input
-        label="Email address"
-        type="email"
-        placeholder="you@example.com"
-        autoComplete="email"
-        error={errors.email?.message}
-        disabled={isLocked}
-        {...register('email')}
-      />
-      <Input
-        label="Password"
-        type="password"
-        placeholder="••••••••"
-        autoComplete="current-password"
-        error={errors.password?.message}
-        disabled={isLocked}
-        {...register('password')}
-      />
-
-      {/* Email not verified banner */}
-      {unverifiedEmail && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="text-sm font-medium text-amber-800">Email not verified</p>
-          <p className="mt-0.5 text-xs text-amber-700">
-            Check your inbox for the verification link.{' '}
+    <div className="space-y-5">
+      {/* Role selector */}
+      <div>
+        <p className="mb-2 text-xs font-medium text-slate-500">Signing in as</p>
+        <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1 gap-1">
+          {ROLE_TABS.map(({ id, label }) => (
             <button
+              key={id}
               type="button"
-              onClick={handleResend}
-              disabled={resending}
-              className="font-semibold underline underline-offset-2 hover:text-amber-900 disabled:opacity-50"
+              onClick={() => setSelectedRole(id)}
+              className={cn(
+                'flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition-all',
+                selectedRole === id
+                  ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200'
+                  : 'text-slate-500 hover:text-slate-700'
+              )}
             >
-              {resending ? 'Sending…' : 'Resend email'}
+              {label}
             </button>
-          </p>
+          ))}
         </div>
-      )}
-
-      {/* Lockout countdown */}
-      {isLocked && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-center text-sm font-medium text-red-600">
-          Too many failed attempts — try again in {lockSecondsLeft}s
-        </p>
-      )}
-
-      <div className="flex items-center justify-between">
-        <label className="flex items-center gap-2 text-sm text-slate-600">
-          <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-blue-600" />
-          Remember me
-        </label>
-        <Link href="/forgot-password" className="text-sm font-medium text-blue-600 hover:text-blue-700">
-          Forgot password?
-        </Link>
       </div>
 
-      <Button type="submit" loading={isSubmitting && !isLocked} disabled={isLocked} className="w-full">
-        {isLocked ? `Locked (${lockSecondsLeft}s)` : 'Sign in'}
-      </Button>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <Input
+          label="Email address"
+          type="email"
+          placeholder="you@example.com"
+          autoComplete="email"
+          error={errors.email?.message}
+          disabled={isLocked}
+          {...register('email')}
+        />
+        <Input
+          label="Password"
+          type="password"
+          placeholder="••••••••"
+          autoComplete="current-password"
+          error={errors.password?.message}
+          disabled={isLocked}
+          {...register('password')}
+        />
 
-      <p className="text-center text-sm text-slate-600">
-        Don&apos;t have an account?{' '}
-        <Link href="/register" className="font-medium text-blue-600 hover:text-blue-700">
-          Create one
-        </Link>
-      </p>
-    </form>
+        {/* Email not verified banner */}
+        {unverifiedEmail && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3">
+            <p className="text-sm font-medium text-amber-800">Email not verified</p>
+            <p className="mt-0.5 text-xs text-amber-700">
+              Check your inbox for the verification link.{' '}
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resending}
+                className="font-semibold underline underline-offset-2 hover:text-amber-900 disabled:opacity-50"
+              >
+                {resending ? 'Sending…' : 'Resend email'}
+              </button>
+            </p>
+          </div>
+        )}
+
+        {/* Lockout countdown */}
+        {isLocked && (
+          <p className="rounded-md bg-red-50 px-3 py-2 text-center text-sm font-medium text-red-600">
+            Too many failed attempts — try again in {lockSecondsLeft}s
+          </p>
+        )}
+
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+            Remember me
+          </label>
+          <Link href="/forgot-password" className="text-sm font-medium text-blue-600 hover:text-blue-700">
+            Forgot password?
+          </Link>
+        </div>
+
+        <Button type="submit" loading={isSubmitting && !isLocked} disabled={isLocked} className="w-full">
+          {isLocked ? `Locked (${lockSecondsLeft}s)` : 'Sign in'}
+        </Button>
+      </form>
+
+      {/* Role-contextual registration CTA */}
+      <div className="border-t border-slate-100 pt-4">
+        {selectedRole === 'patient' && (
+          <p className="text-center text-sm text-slate-600">
+            New to CliniLynk?{' '}
+            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-700">
+              Create a patient account →
+            </Link>
+          </p>
+        )}
+        {selectedRole === 'admin' && (
+          <p className="text-center text-sm text-slate-600">
+            New hospital on CliniLynk?{' '}
+            <Link href="/register-hospital" className="font-medium text-blue-600 hover:text-blue-700">
+              Register your institution →
+            </Link>
+          </p>
+        )}
+        {selectedRole === 'doctor' && (
+          <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-center">
+            <p className="text-xs font-semibold text-blue-800">Doctors are invited by their hospital admin</p>
+            <p className="mt-0.5 text-xs text-blue-600">
+              Contact your hospital administrator to receive an invitation link.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

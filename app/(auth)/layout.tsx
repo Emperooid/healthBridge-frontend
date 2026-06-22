@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Logo } from '@/components/ui/Logo'
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -9,13 +10,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(#3B82F6 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
 
         <div className="relative">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
-              <svg className="h-4.5 w-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-            </div>
-            <span className="text-base font-bold text-white">HealthBridge</span>
+          <div className="flex items-center">
+            <Logo variant="full" size="md" light />
           </div>
 
           <div className="mt-12 space-y-3">
@@ -51,22 +47,17 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             ))}
           </div>
           <p className="mt-4 text-xs text-slate-600">
-            © {new Date().getFullYear()} HealthBridge. All rights reserved.
+            © {new Date().getFullYear()} CliniLynk. All rights reserved.
           </p>
         </div>
       </div>
 
       {/* Right panel — form */}
-      <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 lg:px-16">
-        <div className="w-full max-w-sm">
+      <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 lg:px-12">
+        <div className="w-full max-w-md">
           {/* Mobile logo */}
-          <div className="mb-8 flex items-center gap-2 lg:hidden">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
-              <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-            </div>
-            <span className="text-base font-bold text-slate-900">HealthBridge</span>
+          <div className="mb-8 flex items-center lg:hidden">
+            <Logo variant="full" size="md" />
           </div>
           {children}
         </div>

@@ -11,6 +11,7 @@ import { Pagination } from '@/components/ui/Pagination'
 import { TableSkeleton } from '@/components/ui/Skeleton'
 import { InviteDoctorModal } from '@/features/hospitals/components/InviteDoctorModal'
 import { usersService } from '@/services/users.service'
+import { hospitalsService } from '@/services/hospitals.service'
 import { formatDate } from '@/utils/format'
 import type { UserRole } from '@/types'
 
@@ -28,8 +29,15 @@ export default function UsersPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['users', { role, page }],
-    queryFn: () => usersService.list({ role: role || undefined, page, limit: 20 }),
+    queryFn: () => usersService.list({ role: role ? role.toUpperCase() : undefined, page, limit: 20 }),
   })
+
+  // Needed to resolve which hospital the admin belongs to for doctor invitations
+  const { data: hospitalsData } = useQuery({
+    queryKey: ['admin-hospital'],
+    queryFn: () => hospitalsService.list({ limit: 1 }),
+  })
+  const adminHospitalId = hospitalsData?.data[0]?.id
 
   const toggleStatus = useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
@@ -175,6 +183,7 @@ export default function UsersPage() {
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ['users'] })}
+        hospitalId={adminHospitalId}
       />
     </div>
   )

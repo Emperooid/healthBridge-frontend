@@ -15,15 +15,14 @@ import { formatDateTime, capitalise } from '@/utils/format'
 import type { AuditAction } from '@/types'
 
 const actionBadge: Partial<Record<AuditAction, 'success' | 'info' | 'warning' | 'error' | 'purple'>> = {
-  login: 'success',
-  logout: 'default' as never,
-  create_record: 'success',
-  update_record: 'warning',
-  delete_record: 'error',
-  create_hospital: 'success',
-  assign_doctor: 'purple',
-  create_user: 'success',
-  delete_user: 'error',
+  LOGIN: 'success',
+  CREATE: 'success',
+  READ: 'info',
+  UPDATE: 'warning',
+  DELETE: 'error',
+  FILE_UPLOAD: 'info',
+  FILE_ACCESS: 'info',
+  SHARE: 'purple',
 }
 
 const quickActions = [
@@ -54,7 +53,7 @@ function OnboardingBanner({ doctorCount }: { doctorCount: number }) {
             </svg>
           </div>
           <div>
-            <p className="text-sm font-bold text-slate-900">Welcome to HealthBridge! Let&apos;s set up your hospital</p>
+            <p className="text-sm font-bold text-slate-900">Welcome to CliniLynk! Let&apos;s set up your hospital</p>
             <p className="text-xs text-slate-500 mt-0.5">Complete these steps to get your team up and running</p>
           </div>
         </div>
@@ -77,7 +76,7 @@ function OnboardingBanner({ doctorCount }: { doctorCount: number }) {
             step: 1,
             done: true,
             title: 'Hospital registered',
-            desc: 'Your hospital account is active on HealthBridge',
+            desc: 'Your hospital account is active on CliniLynk',
             action: null,
           },
           {
@@ -222,10 +221,10 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-slate-900 truncate">{log.userName}</p>
                         <Badge variant={actionBadge[log.action] ?? 'default'}>
-                          {capitalise(log.action.replace(/_/g, ' '))}
+                          {capitalise(log.action.replace(/_/g, ' ').toLowerCase())}
                         </Badge>
                       </div>
-                      <p className="text-xs text-slate-500 truncate">{log.resourceName}</p>
+                      <p className="text-xs text-slate-500 truncate">{log.resourceType}</p>
                     </div>
                     <span className="shrink-0 text-xs text-slate-400">{formatDateTime(log.timestamp)}</span>
                   </div>

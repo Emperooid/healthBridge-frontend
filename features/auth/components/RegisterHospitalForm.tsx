@@ -156,7 +156,7 @@ export function RegisterHospitalForm() {
           Admin account
         </h2>
         <p className="text-xs text-slate-500 mb-4">
-          This person will be the primary administrator for your hospital on HealthBridge.
+          This person will be the primary administrator for your hospital on CliniLynk.
         </p>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">

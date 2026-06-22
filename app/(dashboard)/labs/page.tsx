@@ -11,12 +11,13 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
 import { TableSkeleton } from '@/components/ui/Skeleton'
 import { labsService } from '@/services/labs.service'
 import { PatientSearchField } from '@/features/patients/components/PatientSearchField'
 import { useAuthStore } from '@/store/auth.store'
 import { formatDate, formatDateTime } from '@/utils/format'
-import type { LabOrderStatus, LabResult } from '@/types'
+import type { LabOrder, LabOrderStatus, LabResult } from '@/types'
 
 const statusVariant: Record<LabOrderStatus, 'warning' | 'info' | 'success' | 'error'> = {
   PENDING: 'warning',
@@ -38,6 +39,132 @@ const orderSchema = z.object({
 })
 
 type OrderForm = z.infer<typeof orderSchema>
+
+const resultSchema = z.object({
+  testName: z.string().min(1, 'Test name is required'),
+  value: z.string().optional(),
+  unit: z.string().optional(),
+  referenceRange: z.string().optional(),
+  interpretation: z.enum(['NORMAL', 'ABNORMAL', 'CRITICAL']).optional(),
+  notes: z.string().optional(),
+})
+type ResultForm = z.infer<typeof resultSchema>
+
+function EnterResultModal({ order, onClose }: { order: LabOrder; onClose: () => void }) {
+  const queryClient = useQueryClient()
+  const form = useForm<ResultForm>({ resolver: zodResolver(resultSchema) })
+
+  const addResultMutation = useMutation({
+    mutationFn: (data: ResultForm) =>
+      labsService.addResult({ orderId: order.id, ...data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lab-orders'] })
+      queryClient.invalidateQueries({ queryKey: ['lab-results', order.id] })
+      form.reset()
+      toast.success('Result saved')
+    },
+    onError: () => toast.error('Failed to save result'),
+  })
+
+  const completeOrderMutation = useMutation({
+    mutationFn: () => labsService.updateOrder(order.id, { status: 'COMPLETED' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lab-orders'] })
+      toast.success('Order marked as completed')
+      onClose()
+    },
+    onError: () => toast.error('Failed to update order'),
+  })
+
+  const { data: existingResults } = useQuery({
+    queryKey: ['lab-results', order.id],
+    queryFn: () => labsService.getResults(order.id),
+  })
+
+  return (
+    <Modal open onClose={onClose} title="Enter Lab Results" description={`Order: ${order.tests.join(', ')}`} size="lg">
+      <div className="space-y-5">
+        {/* Existing results */}
+        {existingResults && existingResults.length > 0 && (
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Results entered ({existingResults.length})
+            </p>
+            <div className="space-y-2">
+              {existingResults.map((r) => (
+                <div key={r.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-slate-800">{r.testName ?? 'Result'}</span>
+                    {r.interpretation && (
+                      <Badge variant={interpretationVariant[r.interpretation]}>{r.interpretation}</Badge>
+                    )}
+                  </div>
+                  {r.value && (
+                    <p className="mt-0.5 text-slate-600">
+                      {r.value}{r.unit && <span className="ml-1 text-slate-400">{r.unit}</span>}
+                      {r.referenceRange && <span className="ml-2 text-xs text-slate-400">(ref: {r.referenceRange})</span>}
+                    </p>
+                  )}
+                  {r.notes && <p className="mt-0.5 text-xs text-slate-500">{r.notes}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* New result form */}
+        <form onSubmit={form.handleSubmit((d) => addResultMutation.mutate(d))} className="space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Add Result</p>
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Test name"
+              placeholder="e.g. Haemoglobin"
+              error={form.formState.errors.testName?.message}
+              {...form.register('testName')}
+            />
+            <Select
+              label="Interpretation"
+              placeholder="Select..."
+              options={[
+                { value: 'NORMAL', label: 'Normal' },
+                { value: 'ABNORMAL', label: 'Abnormal' },
+                { value: 'CRITICAL', label: 'Critical' },
+              ]}
+              {...form.register('interpretation')}
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <Input label="Value" placeholder="e.g. 12.5" {...form.register('value')} />
+            <Input label="Unit" placeholder="e.g. g/dL" {...form.register('unit')} />
+            <Input label="Reference range" placeholder="e.g. 12–16" {...form.register('referenceRange')} />
+          </div>
+          <Input
+            label="Notes (optional)"
+            placeholder="Additional clinical notes"
+            {...form.register('notes')}
+          />
+          <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => completeOrderMutation.mutate()}
+              disabled={completeOrderMutation.isPending || order.status === 'COMPLETED'}
+            >
+              {completeOrderMutation.isPending ? 'Completing...' : 'Mark Order Complete'}
+            </Button>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={onClose}>Close</Button>
+              <Button type="submit" disabled={addResultMutation.isPending}>
+                {addResultMutation.isPending ? 'Saving...' : 'Save Result'}
+              </Button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </Modal>
+  )
+}
 
 function ResultsModal({ orderId, onClose }: { orderId: string; onClose: () => void }) {
   const { data: results, isLoading } = useQuery({
@@ -96,17 +223,24 @@ export default function LabsPage() {
   const queryClient = useQueryClient()
   const [orderOpen, setOrderOpen] = useState(false)
   const [viewResultsId, setViewResultsId] = useState<string | null>(null)
+  const [enterResultOrder, setEnterResultOrder] = useState<LabOrder | null>(null)
   const [selectedPatientName, setSelectedPatientName] = useState('')
   const isDoctor = user?.role === 'doctor'
   const isPatient = user?.role === 'patient'
 
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: LabOrderStatus }) =>
+      labsService.updateOrder(id, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lab-orders'] })
+      toast.success('Order status updated')
+    },
+    onError: () => toast.error('Failed to update status'),
+  })
+
   const { data, isLoading } = useQuery({
     queryKey: ['lab-orders', user?.id, user?.role],
-    queryFn: () =>
-      labsService.listOrders({
-        ...(isDoctor ? { doctorId: user?.id } : {}),
-        ...(isPatient ? { patientId: user?.id } : {}),
-      }),
+    queryFn: () => labsService.listOrders(),
   })
 
   const form = useForm<OrderForm>({
@@ -190,14 +324,33 @@ export default function LabsPage() {
                     </td>
                     <td className="px-5 py-3 text-slate-500">{formatDate(order.orderedAt ?? order.createdAt)}</td>
                     <td className="px-5 py-3 text-right">
-                      {order.status === 'COMPLETED' && (
-                        <button
-                          onClick={() => setViewResultsId(order.id)}
-                          className="text-xs font-medium text-blue-600 hover:text-blue-700"
-                        >
-                          View results →
-                        </button>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        {isDoctor && order.status === 'PENDING' && (
+                          <button
+                            onClick={() => updateStatusMutation.mutate({ id: order.id, status: 'IN_PROGRESS' })}
+                            disabled={updateStatusMutation.isPending}
+                            className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                          >
+                            Start →
+                          </button>
+                        )}
+                        {isDoctor && (order.status === 'PENDING' || order.status === 'IN_PROGRESS') && (
+                          <button
+                            onClick={() => setEnterResultOrder(order)}
+                            className="rounded px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                          >
+                            Enter results
+                          </button>
+                        )}
+                        {order.status === 'COMPLETED' && (
+                          <button
+                            onClick={() => setViewResultsId(order.id)}
+                            className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                          >
+                            View results →
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -275,6 +428,14 @@ export default function LabsPage() {
       {/* Results modal */}
       {viewResultsId && (
         <ResultsModal orderId={viewResultsId} onClose={() => setViewResultsId(null)} />
+      )}
+
+      {/* Enter results modal */}
+      {enterResultOrder && (
+        <EnterResultModal
+          order={enterResultOrder}
+          onClose={() => setEnterResultOrder(null)}
+        />
       )}
     </div>
   )

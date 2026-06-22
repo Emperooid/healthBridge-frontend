@@ -33,7 +33,7 @@ export default function DoctorDashboard() {
 
   const { data: recentRecords, isLoading: loadingRecords } = useQuery({
     queryKey: ['doctor-recent-records', user?.id],
-    queryFn: () => recordsService.list({ doctorId: user?.id, limit: 5 }),
+    queryFn: () => recordsService.list({ limit: 5 }),
     enabled: !!user?.id,
   })
 
@@ -44,7 +44,6 @@ export default function DoctorDashboard() {
   const { data: todayAppts, isLoading: loadingAppts } = useQuery({
     queryKey: ['doctor-today-appts', user?.id],
     queryFn: () => appointmentsService.list({
-      doctorId: user?.id,
       from: todayStr,
       to: tomorrowStr,
       limit: 10,

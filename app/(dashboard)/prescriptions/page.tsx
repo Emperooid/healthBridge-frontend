@@ -21,7 +21,6 @@ import type { PrescriptionStatus } from '@/types'
 
 const statusVariant: Record<PrescriptionStatus, 'success' | 'info' | 'warning' | 'error'> = {
   ACTIVE: 'success',
-  DISPENSED: 'info',
   COMPLETED: 'info',
   CANCELLED: 'error',
 }
@@ -59,7 +58,7 @@ export default function PrescriptionsPage() {
     queryFn: () =>
       isPatient
         ? prescriptionsService.mine()
-        : prescriptionsService.list({ doctorId: isDoctor ? user?.id : undefined }),
+        : prescriptionsService.list(),
   })
 
   const form = useForm<PrescriptionForm>({ resolver: zodResolver(prescriptionSchema) })
@@ -143,13 +142,13 @@ export default function PrescriptionsPage() {
                       <td className="px-5 py-3 text-slate-600">{rx.patientName ?? '—'}</td>
                     )}
                     {isPatient && (
-                      <td className="px-5 py-3 text-slate-600">{rx.doctorName ? `Dr. ${rx.doctorName}` : '—'}</td>
+                      <td className="px-5 py-3 text-slate-600">{rx.doctorName ?? '—'}</td>
                     )}
                     <td className="px-5 py-3 text-slate-600">{rx.dosage}</td>
                     <td className="px-5 py-3 text-slate-600">{rx.frequency}</td>
                     <td className="px-5 py-3 text-slate-600">{rx.duration}</td>
                     <td className="px-5 py-3">
-                      <Badge variant={statusVariant[rx.status]}>{rx.status}</Badge>
+                      <Badge variant={statusVariant[rx.status] ?? 'default'}>{rx.status}</Badge>
                     </td>
                     <td className="px-5 py-3 text-slate-500">{formatDate(rx.prescribedAt ?? rx.createdAt)}</td>
                     {isDoctor && (

@@ -10,13 +10,41 @@ import { cn } from '@/utils/cn'
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const { sidebarOpen, setSidebarOpen } = useUIStore()
-  const { isAuthenticated, _hasHydrated } = useAuthStore()
+  const { isAuthenticated, _hasHydrated, accessToken, user } = useAuthStore()
   const redirectingRef = useRef(false)
+  const refreshAttemptedRef = useRef(false)
 
   // Start with sidebar closed on mobile so it doesn't overlay content
   useEffect(() => {
     if (window.innerWidth < 1024) setSidebarOpen(false)
   }, [setSidebarOpen])
+
+  // accessToken is memory-only and lost on page reload. Proactively refresh it before
+  // child components mount and fire API calls that would otherwise get 401.
+  useEffect(() => {
+    if (!_hasHydrated || !isAuthenticated || accessToken || !user || refreshAttemptedRef.current) return
+    refreshAttemptedRef.current = true
+    const { id, role, email, name } = user  // capture before async boundary
+    fetch('/api/v1/auth/refresh', { method: 'POST', credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then(async (json) => {
+        const newToken: string = json?.data?.accessToken ?? json?.accessToken
+        if (newToken) {
+          useAuthStore.getState().setTokens(newToken)
+          // Render's cookie uses its own SESSION_SECRET — re-write the locally-signed one
+          const { writeSession } = await import('@/app/actions/auth')
+          await writeSession(id, role, email, name).catch(() => {})
+        }
+      })
+      .catch((r) => {
+        // Only force logout when the server explicitly rejects the refresh token.
+        // Network errors / Render cold-start timeouts must NOT clear the session —
+        // the hb_session cookie is still valid and the user should stay logged in.
+        if (r && typeof r.status === 'number' && (r.status === 401 || r.status === 403)) {
+          useAuthStore.getState().clearAuth()
+        }
+      })
+  }, [_hasHydrated, isAuthenticated, accessToken, user])
 
   useEffect(() => {
     if (_hasHydrated && !isAuthenticated && !redirectingRef.current) {

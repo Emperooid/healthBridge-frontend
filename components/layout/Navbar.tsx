@@ -188,7 +188,7 @@ export function Navbar() {
 
       {/* Breadcrumb */}
       <div className="flex min-w-0 items-center gap-1.5 text-sm">
-        <span className="hidden sm:inline text-slate-400">HealthBridge</span>
+        <span className="hidden sm:inline text-slate-400">CliniLynk</span>
         <span className="hidden sm:inline text-slate-300">/</span>
         <span className="truncate font-medium text-slate-700">{getBreadcrumb(pathname)}</span>
       </div>

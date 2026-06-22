@@ -13,7 +13,6 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { appointmentsService } from '@/services/appointments.service'
 import { hospitalsService } from '@/services/hospitals.service'
-import { usersService } from '@/services/users.service'
 import { useAuthStore } from '@/store/auth.store'
 
 const schema = z.object({
@@ -42,23 +41,25 @@ export default function BookAppointmentPage() {
   const watchHospital = watch('hospitalId')
 
   const { data: hospitalsData } = useQuery({
-    queryKey: ['hospitals-list'],
-    queryFn: () => hospitalsService.list({ limit: 100 }),
+    queryKey: ['hospitals-public'],
+    queryFn: () => hospitalsService.listPublic(),
   })
 
   const { data: doctorsData } = useQuery({
     queryKey: ['doctors-in-hospital', watchHospital],
-    queryFn: () => usersService.list({ role: 'doctor', hospitalId: watchHospital, limit: 100 }),
+    queryFn: () => hospitalsService.getDoctors(watchHospital),
     enabled: !!watchHospital,
   })
 
   const mutation = useMutation({
-    mutationFn: (data: FormValues) =>
-      appointmentsService.create({
-        ...data,
-        duration: data.duration ? parseInt(data.duration, 10) : 30,
+    mutationFn: (data: FormValues) => {
+      const { duration, ...rest } = data
+      return appointmentsService.create({
+        ...rest,
+        durationMinutes: duration ? parseInt(duration, 10) : 30,
         patientId: user!.id,
-      }),
+      })
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] })
       toast.success('Appointment booked successfully')
@@ -67,8 +68,8 @@ export default function BookAppointmentPage() {
     onError: () => toast.error('Failed to book appointment'),
   })
 
-  const hospitalOptions = hospitalsData?.data.map((h) => ({ value: h.id, label: h.name })) ?? []
-  const doctorOptions = doctorsData?.data.map((d) => ({ value: d.id, label: d.name })) ?? []
+  const hospitalOptions = hospitalsData?.map((h) => ({ value: h.id, label: h.name })) ?? []
+  const doctorOptions = doctorsData?.map((d) => ({ value: d.userId ?? d.id, label: d.name })) ?? []
 
   const minDateTime = new Date()
   minDateTime.setMinutes(minDateTime.getMinutes() + 30)

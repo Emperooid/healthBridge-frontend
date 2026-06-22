@@ -1,17 +1,6 @@
 import { api } from './api'
-import type { AuthResponse, LoginCredentials, RegisterCredentials, User, UserRole } from '@/types'
-
-function normalizeUser(raw: Record<string, unknown>): User {
-  const firstName = (raw.firstName as string) ?? ''
-  const lastName = (raw.lastName as string) ?? ''
-  return {
-    ...(raw as Omit<User, 'name' | 'role'>),
-    firstName,
-    lastName,
-    name: `${firstName} ${lastName}`.trim(),
-    role: ((raw.role as string) ?? '').toLowerCase() as UserRole,
-  }
-}
+import { normalizeUser } from '@/utils/normalizeUser'
+import type { AuthResponse, LoginCredentials, RegisterCredentials } from '@/types'
 
 function normalizeAuth(raw: AuthResponse): AuthResponse {
   return { ...raw, user: normalizeUser(raw.user as unknown as Record<string, unknown>) }

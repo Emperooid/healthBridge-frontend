@@ -9,7 +9,7 @@ const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'HealthBridge — Healthcare Management Platform',
+  title: 'CliniLynk — Healthcare Management Platform',
   description: 'Connecting patients, doctors, and hospitals for seamless healthcare delivery.',
 }
 

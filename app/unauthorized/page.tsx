@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = { title: 'Unauthorized — HealthBridge' }
+export const metadata: Metadata = { title: 'Unauthorized — CliniLynk' }
 
 export default function UnauthorizedPage() {
   return (

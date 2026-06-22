@@ -64,6 +64,18 @@ api.interceptors.response.use(
         })
         const newAccess: string = data?.data?.accessToken ?? data?.accessToken
         useAuthStore.getState().setTokens(newAccess)
+
+        // Render's refresh response sets its own hb_session cookie (signed with Render's
+        // SESSION_SECRET). Re-write the locally-signed cookie so proxy.ts can verify it.
+        const storeUser = useAuthStore.getState().user
+        if (storeUser) {
+          await import('@/app/actions/auth')
+            .then(({ writeSession }) =>
+              writeSession(storeUser.id, storeUser.role, storeUser.email, storeUser.name)
+            )
+            .catch(() => {})
+        }
+
         original.headers.Authorization = `Bearer ${newAccess}`
         drainQueue(newAccess, null)
         return api(original)

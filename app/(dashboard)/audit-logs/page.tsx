@@ -11,20 +11,14 @@ import { formatDateTime, capitalise } from '@/utils/format'
 import type { AuditAction } from '@/types'
 
 const actionVariants: Partial<Record<AuditAction, 'info' | 'success' | 'warning' | 'error' | 'purple'>> = {
-  login: 'success',
-  create_record: 'success',
-  create_hospital: 'success',
-  create_user: 'success',
-  upload_file: 'success',
-  update_record: 'warning',
-  update_hospital: 'warning',
-  update_user: 'warning',
-  delete_record: 'error',
-  delete_user: 'error',
-  assign_doctor: 'purple',
-  view_patient: 'info',
-  view_record: 'info',
-  download_file: 'info',
+  LOGIN: 'success',
+  CREATE: 'success',
+  READ: 'info',
+  UPDATE: 'warning',
+  DELETE: 'error',
+  FILE_UPLOAD: 'info',
+  FILE_ACCESS: 'info',
+  SHARE: 'purple',
 }
 
 export default function AuditLogsPage() {
@@ -49,15 +43,15 @@ export default function AuditLogsPage() {
       <div className="flex items-center gap-3">
         <Select
           options={[
-            { value: 'login', label: 'Login' },
-            { value: 'logout', label: 'Logout' },
-            { value: 'view_patient', label: 'View Patient' },
-            { value: 'create_record', label: 'Create Record' },
-            { value: 'update_record', label: 'Update Record' },
-            { value: 'delete_record', label: 'Delete Record' },
-            { value: 'upload_file', label: 'Upload File' },
-            { value: 'assign_doctor', label: 'Assign Doctor' },
-            { value: 'create_hospital', label: 'Create Hospital' },
+            { value: 'LOGIN', label: 'Login' },
+            { value: 'LOGOUT', label: 'Logout' },
+            { value: 'CREATE', label: 'Create' },
+            { value: 'READ', label: 'Read' },
+            { value: 'UPDATE', label: 'Update' },
+            { value: 'DELETE', label: 'Delete' },
+            { value: 'FILE_UPLOAD', label: 'File Upload' },
+            { value: 'FILE_ACCESS', label: 'File Access' },
+            { value: 'SHARE', label: 'Share' },
           ]}
           placeholder="All actions"
           value={action}
@@ -91,12 +85,12 @@ export default function AuditLogsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant={actionVariants[log.action] ?? 'default'}>
-                        {capitalise(log.action.replace(/_/g, ' '))}
+                        {capitalise(log.action.replace(/_/g, ' ').toLowerCase())}
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
-                      <p className="text-slate-700 truncate max-w-[200px]">{log.resourceName}</p>
-                      <p className="text-xs text-slate-400 capitalize">{log.resourceType}</p>
+                      <p className="text-slate-700 truncate max-w-50">{log.resourceType}</p>
+                      <p className="text-xs text-slate-400 font-mono">{log.resourceId}</p>
                     </td>
                     <td className="px-4 py-3 font-mono text-xs text-slate-500">{log.ipAddress}</td>
                     <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{formatDateTime(log.timestamp)}</td>

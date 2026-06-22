@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { AcceptInviteForm } from '@/features/auth/components/AcceptInviteForm'
 
 export const metadata: Metadata = {
-  title: 'Activate Account — HealthBridge',
+  title: 'Activate Account — CliniLynk',
 }
 
 function LoadingSpinner() {
@@ -20,7 +20,7 @@ export default function AcceptInvitePage() {
       <div className="mb-7">
         <h1 className="text-xl font-bold text-slate-900">Activate your account</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Set a password to complete your HealthBridge doctor account
+          Set a password to complete your CliniLynk doctor account
         </p>
       </div>
       <Suspense fallback={<LoadingSpinner />}>

@@ -10,13 +10,13 @@ import { notificationsService } from '@/services/notifications.service'
 import { formatDateTime } from '@/utils/format'
 import type { NotificationType } from '@/types'
 
-const typeVariant: Record<NotificationType, 'success' | 'info' | 'warning' | 'error' | 'default'> = {
+const typeVariant: Record<NotificationType, 'success' | 'info' | 'warning' | 'error' | 'default' | 'purple'> = {
   appointment_confirmed: 'success',
   appointment_cancelled: 'error',
   appointment_reminder: 'warning',
   record_shared: 'info',
   record_updated: 'info',
-  lab_result: 'purple' as 'info',
+  lab_result: 'purple',
   prescription: 'info',
   system: 'default',
 }

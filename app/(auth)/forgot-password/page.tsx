@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { ForgotPasswordForm } from '@/features/auth/components/ForgotPasswordForm'
 
 export const metadata: Metadata = {
-  title: 'Reset Password — HealthBridge',
+  title: 'Reset Password — CliniLynk',
 }
 
 export default function ForgotPasswordPage() {

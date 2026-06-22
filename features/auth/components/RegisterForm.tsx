@@ -144,24 +144,6 @@ export function RegisterForm() {
         Create patient account
       </Button>
 
-      {/* Doctor callout */}
-      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-        <p className="text-xs font-semibold text-slate-700">Are you a healthcare professional?</p>
-        <p className="mt-0.5 text-xs text-slate-500">
-          Doctors are invited by their hospital admin — contact your hospital administrator to get access.
-        </p>
-      </div>
-
-      {/* Hospital callout */}
-      <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3">
-        <p className="text-xs font-semibold text-blue-800">Want to bring your hospital to HealthBridge?</p>
-        <p className="mt-0.5 text-xs text-blue-700">
-          <Link href="/register-hospital" className="font-medium underline underline-offset-2 hover:text-blue-900">
-            Register your institution →
-          </Link>
-        </p>
-      </div>
-
       <p className="text-center text-sm text-slate-600">
         Already have an account?{' '}
         <Link href="/login" className="font-medium text-blue-600 hover:text-blue-700">Sign in</Link>

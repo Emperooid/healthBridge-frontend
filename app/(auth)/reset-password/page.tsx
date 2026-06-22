@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { ResetPasswordForm } from '@/features/auth/components/ResetPasswordForm'
 
 export const metadata: Metadata = {
-  title: 'Reset Password — HealthBridge',
+  title: 'Reset Password — CliniLynk',
 }
 
 export default function ResetPasswordPage() {

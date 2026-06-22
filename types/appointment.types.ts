@@ -28,7 +28,7 @@ export interface CreateAppointmentData {
   reason: string
   type: AppointmentType
   scheduledAt: string
-  duration?: number
+  durationMinutes?: number
   notes?: string
 }
 

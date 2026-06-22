@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { HospitalForm } from '@/features/hospitals/components/HospitalForm'
 
-export const metadata: Metadata = { title: 'New Hospital — HealthBridge' }
+export const metadata: Metadata = { title: 'New Hospital — CliniLynk' }
 
 export default function NewHospitalPage() {
   return (

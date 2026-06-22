@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { VerifyEmailView } from '@/features/auth/components/VerifyEmailView'
 
 export const metadata: Metadata = {
-  title: 'Verify Email — HealthBridge',
+  title: 'Verify Email — CliniLynk',
 }
 
 export default function VerifyEmailPage() {

@@ -153,7 +153,7 @@ export default function PatientDashboard() {
                     <Badge variant={apptStatusVariant[appt.status]}>{appt.status.charAt(0) + appt.status.slice(1).toLowerCase()}</Badge>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {appt.doctorName ? `Dr. ${appt.doctorName}` : ''}{appt.doctorName && appt.hospitalName ? ' · ' : ''}{appt.hospitalName ?? ''}
+                    {appt.doctorName ?? ''}{appt.doctorName && appt.hospitalName ? ' · ' : ''}{appt.hospitalName ?? ''}
                   </p>
                   <p className="text-xs text-slate-400">{formatDateTime(appt.scheduledAt)} · {appt.duration} min</p>
                 </div>
@@ -208,7 +208,7 @@ export default function PatientDashboard() {
                         </p>
                       )}
                       <p className="mt-1 text-xs text-slate-400">
-                        {record.doctorName && <span>Dr. {record.doctorName} · </span>}
+                        {record.doctorName && <span>{record.doctorName} · </span>}
                         {formatDate(record.visitDate ?? record.createdAt)}
                       </p>
                     </div>

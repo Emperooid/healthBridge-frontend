@@ -127,7 +127,6 @@ export default function SchedulePage() {
     queryKey: ['schedule', toDateStr(weekStart), user?.id],
     queryFn: () =>
       appointmentsService.list({
-        doctorId: user?.id,
         from: toDateStr(weekStart),
         to: toDateStr(addDays(weekEnd, 1)),
         limit: 200,
@@ -339,7 +338,7 @@ export default function SchedulePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               <p className="text-sm font-medium text-slate-500">No appointments this week</p>
-              <p className="mt-1 text-xs text-slate-400">Patients will book with you through the HealthBridge platform</p>
+              <p className="mt-1 text-xs text-slate-400">Patients will book with you through the CliniLynk platform</p>
             </div>
           )}
         </>

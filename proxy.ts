@@ -57,6 +57,14 @@ function matchesPrefix(pathname: string, prefix: string) {
 
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  // Server Actions are POST requests with a Next-Action header. They run server-side
+  // and handle their own auth — let them through so writeSession() can set the cookie
+  // even when hb_session is temporarily backend-signed (e.g. right after a refresh).
+  if (request.method === 'POST' && request.headers.has('next-action')) {
+    return NextResponse.next()
+  }
+
   const session = await getSession(request)
 
   const isAuthRoute = AUTH_ROUTES.some((r) => matchesPrefix(pathname, r))

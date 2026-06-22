@@ -1,31 +1,24 @@
 export type AuditAction =
-  | 'login'
-  | 'logout'
-  | 'view_patient'
-  | 'view_record'
-  | 'create_record'
-  | 'update_record'
-  | 'delete_record'
-  | 'upload_file'
-  | 'download_file'
-  | 'create_hospital'
-  | 'update_hospital'
-  | 'assign_doctor'
-  | 'create_user'
-  | 'update_user'
-  | 'delete_user'
+  | 'LOGIN'
+  | 'LOGOUT'
+  | 'CREATE'
+  | 'READ'
+  | 'UPDATE'
+  | 'DELETE'
+  | 'FILE_UPLOAD'
+  | 'FILE_ACCESS'
+  | 'SHARE'
 
 export interface AuditLog {
   id: string
-  userId: string
-  userName: string
-  userRole: string
+  userId: string | null
+  userName: string | null
+  userRole: string | null
   action: AuditAction
-  resourceType: string
-  resourceId: string
-  resourceName: string
-  ipAddress: string
-  userAgent: string
+  resourceType: string | null
+  resourceId: string | null
+  ipAddress: string | null
+  userAgent: string | null
   timestamp: string
   details?: Record<string, unknown>
 }

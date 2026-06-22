@@ -1,4 +1,4 @@
-export type PrescriptionStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'DISPENSED'
+export type PrescriptionStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
 
 export interface Prescription {
   id: string

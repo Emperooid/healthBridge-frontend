@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/utils/cn'
 import { useAuthStore } from '@/store/auth.store'
 import { useUIStore } from '@/store/ui.store'
+import { Logo } from '@/components/ui/Logo'
 import type { UserRole } from '@/types'
 
 interface NavItem {
@@ -208,14 +209,11 @@ export function Sidebar() {
       )}
     >
       {/* Logo */}
-      <div className={cn('flex h-14 shrink-0 items-center border-b border-white/5', sidebarOpen ? 'px-4 gap-3' : 'justify-center')}>
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-blue-600">
-          <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-          </svg>
-        </div>
-        {sidebarOpen && (
-          <span className="text-sm font-bold text-white tracking-tight">HealthBridge</span>
+      <div className={cn('flex h-14 shrink-0 items-center border-b border-white/5', sidebarOpen ? 'px-4' : 'justify-center')}>
+        {sidebarOpen ? (
+          <Logo variant="full" size="sm" light />
+        ) : (
+          <Logo variant="icon" size="sm" />
         )}
       </div>
 
