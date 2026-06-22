@@ -9,36 +9,47 @@ interface LogoProps {
   light?: boolean
 }
 
-const sizes = {
-  sm: { icon: 28, full: { width: 110, height: 28 } },
-  md: { icon: 36, full: { width: 140, height: 36 } },
-  lg: { icon: 48, full: { width: 180, height: 48 } },
-}
+const iconSizes = { sm: 28, md: 36, lg: 44 }
+const textSizes = { sm: 'text-sm', md: 'text-base', lg: 'text-lg' }
 
 export function Logo({ variant = 'full', size = 'md', className, light = false }: LogoProps) {
-  const s = sizes[size]
+  const iconPx = iconSizes[size]
+  const textCls = textSizes[size]
 
   if (variant === 'icon') {
     return (
       <Image
-        src="/logo-removebg-preview.png"
+        src="/logo-2-removebg-preview.png"
         alt="CliniLynk"
-        width={s.icon}
-        height={s.icon}
-        className={cn('object-contain', light && 'brightness-0 invert', className)}
+        width={iconPx}
+        height={iconPx}
+        style={{ width: iconPx, height: 'auto' }}
+        className={cn('object-contain shrink-0', light && 'brightness-0 invert', className)}
         priority
       />
     )
   }
 
   return (
-    <Image
-      src="/logo-2-removebg-preview.png"
-      alt="CliniLynk"
-      width={s.full.width}
-      height={s.full.height}
-      className={cn('object-contain', light && 'brightness-0 invert', className)}
-      priority
-    />
+    <span className={cn('inline-flex items-center gap-2 shrink-0', className)}>
+      <Image
+        src="/logo-2-removebg-preview.png"
+        alt=""
+        width={iconPx}
+        height={iconPx}
+        style={{ width: iconPx, height: 'auto' }}
+        className={cn('object-contain shrink-0', light && 'brightness-0 invert')}
+        priority
+      />
+      <span
+        className={cn(
+          'font-bold tracking-tight leading-none',
+          textCls,
+          light ? 'text-white' : 'text-slate-900',
+        )}
+      >
+        CliniLynk
+      </span>
+    </span>
   )
 }

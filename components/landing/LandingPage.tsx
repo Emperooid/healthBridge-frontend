@@ -580,7 +580,7 @@ export function LandingPage() {
           <div className="mb-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             <div className="lg:col-span-1">
               <div className="mb-4 flex items-center">
-                <Logo variant="full" size="sm" light />
+                <Logo variant="full" size="sm" />
               </div>
               <p className="text-sm leading-relaxed text-slate-500">
                 Healthcare infrastructure for Africa. Connecting patients, doctors, and hospitals on one secure platform.

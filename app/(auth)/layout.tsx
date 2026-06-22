@@ -11,7 +11,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
         <div className="relative">
           <div className="flex items-center">
-            <Logo variant="full" size="md" light />
+            <Logo variant="full" size="md" />
           </div>
 
           <div className="mt-12 space-y-3">

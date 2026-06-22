@@ -48,11 +48,12 @@ export function RegisterHospitalForm() {
 
       const rawUser = response?.user
 
-      // If the backend didn't return a user object, decode the JWT to get the userId
-      let userId = rawUser?.id
+      // Try JWT first (base64url → base64 conversion required for atob)
+      let userId: string | undefined = rawUser?.id
       if (!userId && response?.accessToken) {
         try {
-          const payload = JSON.parse(atob(response.accessToken.split('.')[1]))
+          const b64 = response.accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+          const payload = JSON.parse(atob(b64))
           userId = payload.sub as string
         } catch {}
       }
@@ -70,6 +71,12 @@ export function RegisterHospitalForm() {
         role: ((rawUser?.role as string) ?? 'admin').toLowerCase() as UserRole,
         isActive: rawUser?.isActive ?? true,
         createdAt: rawUser?.createdAt ?? new Date().toISOString(),
+      }
+
+      if (!user.id) {
+        toast.error('Registration succeeded but session could not be established. Please log in.')
+        router.push('/login')
+        return
       }
 
       setUser(user, response.accessToken)

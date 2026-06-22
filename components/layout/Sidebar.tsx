@@ -211,7 +211,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className={cn('flex h-14 shrink-0 items-center border-b border-white/5', sidebarOpen ? 'px-4' : 'justify-center')}>
         {sidebarOpen ? (
-          <Logo variant="full" size="sm" light />
+          <Logo variant="full" size="sm" />
         ) : (
           <Logo variant="icon" size="sm" />
         )}
