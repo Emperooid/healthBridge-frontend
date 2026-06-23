@@ -8,10 +8,7 @@ import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { hospitalsService } from '@/services/hospitals.service'
-import { useAuthStore } from '@/store/auth.store'
-import { writeSession } from '@/app/actions/auth'
 import { hospitalRegistrationSchema, type HospitalRegistrationFormData } from '@/utils/validators'
-import type { User, UserRole } from '@/types'
 
 const HOSPITAL_TYPES = [
   { value: 'GENERAL', label: 'General Hospital' },
@@ -24,7 +21,6 @@ const HOSPITAL_TYPES = [
 
 export function RegisterHospitalForm() {
   const router = useRouter()
-  const { setUser } = useAuthStore()
 
   const {
     register,
@@ -37,7 +33,7 @@ export function RegisterHospitalForm() {
   async function onSubmit(data: HospitalRegistrationFormData) {
     const { confirmPassword: _, hospitalName, adminPassword, adminEmail, adminFirstName, adminLastName, ...rest } = data
     try {
-      const response = await hospitalsService.registerHospital({
+      await hospitalsService.registerHospital({
         ...rest,
         name: hospitalName,
         adminPassword,
@@ -46,43 +42,8 @@ export function RegisterHospitalForm() {
         adminLastName,
       })
 
-      const rawUser = response?.user
-
-      // Try JWT first (base64url → base64 conversion required for atob)
-      let userId: string | undefined = rawUser?.id
-      if (!userId && response?.accessToken) {
-        try {
-          const b64 = response.accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
-          const payload = JSON.parse(atob(b64))
-          userId = payload.sub as string
-        } catch {}
-      }
-
-      const firstName = rawUser?.firstName ?? adminFirstName
-      const lastName = rawUser?.lastName ?? adminLastName
-
-      const user: User = {
-        id: userId ?? '',
-        email: rawUser?.email ?? adminEmail,
-        firstName,
-        lastName,
-        name: `${firstName} ${lastName}`.trim(),
-        phone: rawUser?.phone,
-        role: ((rawUser?.role as string) ?? 'admin').toLowerCase() as UserRole,
-        isActive: rawUser?.isActive ?? true,
-        createdAt: rawUser?.createdAt ?? new Date().toISOString(),
-      }
-
-      if (!user.id) {
-        toast.error('Registration succeeded but session could not be established. Please log in.')
-        router.push('/login')
-        return
-      }
-
-      setUser(user, response.accessToken)
-      await writeSession(user.id, user.role, user.email, user.name)
-      toast.success(`Welcome, ${user.firstName}! Your hospital is ready.`)
-      router.push('/dashboard/admin')
+      toast.success(`Hospital registered! Sign in with your admin credentials to continue.`, { duration: 5000 })
+      router.push('/login')
     } catch (err: unknown) {
       toast.error((err as { message?: string })?.message ?? 'Registration failed. Please try again.')
     }
