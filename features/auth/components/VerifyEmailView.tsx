@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { authService } from '@/services/auth.service'
 
@@ -9,9 +9,11 @@ type VerifyState = 'loading' | 'success' | 'error'
 
 export function VerifyEmailView() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const token = searchParams.get('token')
   const [state, setState] = useState<VerifyState>('loading')
   const [errorMessage, setErrorMessage] = useState('')
+  const [countdown, setCountdown] = useState(3)
 
   useEffect(() => {
     if (!token) {
@@ -32,6 +34,21 @@ export function VerifyEmailView() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Auto-redirect to login 3 seconds after success
+  useEffect(() => {
+    if (state !== 'success') return
+    const interval = setInterval(() => {
+      setCountdown((n) => {
+        if (n <= 1) {
+          clearInterval(interval)
+          router.push('/login')
+        }
+        return n - 1
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [state, router])
+
   if (state === 'loading') {
     return (
       <div className="flex flex-col items-center gap-3 text-center">
@@ -43,21 +60,23 @@ export function VerifyEmailView() {
 
   if (state === 'success') {
     return (
-      <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+      <div className="text-center space-y-4">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
           <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-slate-900">Email verified</h3>
-        <p className="mt-2 text-sm text-slate-600">
-          Your account is now active. You can sign in.
-        </p>
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900">Email verified!</h3>
+          <p className="mt-2 text-sm text-slate-600">
+            Your account is now active. Taking you to sign in{countdown > 0 ? ` in ${countdown}…` : '…'}
+          </p>
+        </div>
         <Link
           href="/login"
-          className="mt-5 inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+          className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
         >
-          Sign in
+          Sign in now
         </Link>
       </div>
     )
@@ -72,12 +91,17 @@ export function VerifyEmailView() {
       </div>
       <h3 className="text-lg font-semibold text-slate-900">Verification failed</h3>
       <p className="mt-2 text-sm text-slate-600">{errorMessage}</p>
-      <Link
-        href="/forgot-password"
-        className="mt-4 inline-block text-sm font-medium text-blue-600 hover:text-blue-700"
-      >
-        Request a new link
-      </Link>
+      <div className="mt-4 flex flex-col gap-2">
+        <Link
+          href="/login"
+          className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+        >
+          Back to sign in
+        </Link>
+        <p className="text-xs text-slate-500">
+          Sign in and the app will prompt you to resend the verification email.
+        </p>
+      </div>
     </div>
   )
 }

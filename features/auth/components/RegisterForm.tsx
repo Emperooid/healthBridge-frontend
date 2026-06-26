@@ -10,12 +10,29 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { authService } from '@/services/auth.service'
 import { hospitalsService } from '@/services/hospitals.service'
-import { useAuthStore } from '@/store/auth.store'
 import { registerSchema, type RegisterFormData } from '@/utils/validators'
 
+type Screen = 'form' | 'check-email' | 'timeout' | 'conflict'
+
+function classifyError(err: unknown): { screen: Screen; message?: string } {
+  const code = (err as { code?: string })?.code ?? ''
+  const status = (err as { response?: { status?: number } })?.response?.status
+  const msg = (err as { message?: string })?.message ?? ''
+
+  if (status === 409) return { screen: 'conflict' }
+  if (
+    code === 'ECONNABORTED' ||
+    code === 'ERR_NETWORK' ||
+    code === 'ENOTFOUND' ||
+    msg.toLowerCase().includes('timeout') ||
+    msg.toLowerCase().includes('network error')
+  ) return { screen: 'timeout' }
+  return { screen: 'form', message: msg || 'Registration failed. Please try again.' }
+}
+
 export function RegisterForm() {
-  const { setUser } = useAuthStore()
-  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
+  const [screen, setScreen] = useState<Screen>('form')
+  const [pendingEmail, setPendingEmail] = useState('')
   const [resending, setResending] = useState(false)
 
   const { data: hospitals } = useQuery({
@@ -27,16 +44,23 @@ export function RegisterForm() {
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({ resolver: zodResolver(registerSchema) })
 
   async function onSubmit(data: RegisterFormData) {
     try {
-      const response = await authService.register({ ...data, role: 'patient' })
-      setUser(response.user, response.accessToken)
+      await authService.register({ ...data, role: 'patient' })
       setPendingEmail(data.email)
-    } catch (err: unknown) {
-      toast.error((err as { message?: string })?.message ?? 'Registration failed. Please try again.')
+      setScreen('check-email')
+    } catch (err) {
+      const { screen: next, message } = classifyError(err)
+      if (next === 'form') {
+        toast.error(message!)
+      } else {
+        setPendingEmail(getValues('email'))
+        setScreen(next)
+      }
     }
   }
 
@@ -53,20 +77,24 @@ export function RegisterForm() {
     }
   }
 
-  if (pendingEmail) {
+  // ── Email sent ───────────────────────────────────────────────────────────────
+  if (screen === 'check-email') {
     return (
-      <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+      <div className="text-center space-y-4">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
           <svg className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-slate-900">Check your email</h3>
-        <p className="mt-2 text-sm text-slate-600">
-          We sent a verification link to <span className="font-medium text-slate-800">{pendingEmail}</span>.
-          Click the link to activate your account.
-        </p>
-        <p className="mt-4 text-xs text-slate-500">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900">Check your email</h3>
+          <p className="mt-2 text-sm text-slate-600">
+            We sent a verification link to{' '}
+            <span className="font-medium text-slate-800">{pendingEmail}</span>.
+            Click it to activate your account.
+          </p>
+        </div>
+        <p className="text-xs text-slate-500">
           Didn&apos;t receive it?{' '}
           <button
             onClick={handleResend}
@@ -76,13 +104,96 @@ export function RegisterForm() {
             {resending ? 'Sending…' : 'Resend verification email'}
           </button>
         </p>
-        <Link href="/login" className="mt-4 inline-block text-sm font-medium text-slate-500 hover:text-slate-700">
-          Back to sign in
+        <Link href="/login" className="inline-block text-sm font-medium text-slate-500 hover:text-slate-700">
+          ← Back to sign in
         </Link>
       </div>
     )
   }
 
+  // ── Timeout / network error ──────────────────────────────────────────────────
+  if (screen === 'timeout') {
+    return (
+      <div className="text-center space-y-4">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
+          <svg className="h-8 w-8 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900">Taking longer than expected</h3>
+          <p className="mt-2 text-sm text-slate-600">
+            The server is warming up. Your account may already have been created —
+            check your email for a verification link, or try signing in with the
+            credentials you just entered.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2">
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            Try signing in
+          </Link>
+          <button
+            onClick={handleResend}
+            disabled={resending || !pendingEmail}
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50"
+          >
+            {resending ? 'Sending…' : 'Send verification email to ' + pendingEmail}
+          </button>
+          <button
+            onClick={() => setScreen('form')}
+            className="text-sm text-slate-500 hover:text-slate-700"
+          >
+            Try registering again
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Email already registered ─────────────────────────────────────────────────
+  if (screen === 'conflict') {
+    return (
+      <div className="text-center space-y-4">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+          <svg className="h-8 w-8 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-slate-900">Account already exists</h3>
+          <p className="mt-2 text-sm text-slate-600">
+            <span className="font-medium text-slate-800">{pendingEmail}</span> is already
+            registered. Sign in, or reset your password if you&apos;ve forgotten it.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2">
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/forgot-password"
+            className="text-sm font-medium text-blue-600 hover:text-blue-700"
+          >
+            Forgot password?
+          </Link>
+          <button
+            onClick={() => { setScreen('form'); setPendingEmail('') }}
+            className="text-sm text-slate-500 hover:text-slate-700"
+          >
+            Use a different email
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Main registration form ───────────────────────────────────────────────────
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -123,7 +234,6 @@ export function RegisterForm() {
         {...register('password')}
       />
 
-      {/* Hospital selector */}
       <div className="space-y-1.5">
         <label className="block text-sm font-medium text-slate-700">
           Your hospital <span className="text-slate-400 font-normal">(optional)</span>
@@ -141,7 +251,7 @@ export function RegisterForm() {
       </div>
 
       <Button type="submit" loading={isSubmitting} className="w-full">
-        Create patient account
+        {isSubmitting ? 'Creating account…' : 'Create patient account'}
       </Button>
 
       <p className="text-center text-sm text-slate-600">

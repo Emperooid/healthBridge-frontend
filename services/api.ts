@@ -6,7 +6,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '/api/v1'
 export const api = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 15000,
+  timeout: 45000,
   // Required for the browser to send the HttpOnly hb_refresh_token cookie cross-origin
   withCredentials: true,
 })
